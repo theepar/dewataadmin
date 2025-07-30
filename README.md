@@ -1,4 +1,4 @@
-# Dewata Villa Management Backend
+# Dewata Management Backend
 
 Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisasi kalender eksternal (Airbnb iCal). Sistem ini mengintegrasikan panel admin Filament, manajemen media, peran pengguna, dan API untuk aplikasi mobile.
 
