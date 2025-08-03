@@ -20,6 +20,9 @@ class IcalEvent extends Model
         'status',
         'guest_name',
         'reservation_id',
+        'property_name',
+        'jumlah_orang',
+        'durasi',
         'is_cancelled',
     ];
 

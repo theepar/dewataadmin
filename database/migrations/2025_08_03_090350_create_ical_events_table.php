@@ -23,10 +23,15 @@ return new class extends Migration
             $table->dateTime('end_date');
             $table->string('status')->nullable(); // Status dari iCal property
 
-            // Kolom tambahan untuk detail dari deskripsi iCal
+            // Kolom tambahan untuk detail dari deskripsi iCal/Airbnb
             $table->string('guest_name')->nullable();
             $table->string('reservation_id')->nullable();
+            $table->string('property_name')->nullable();
+            $table->integer('jumlah_orang')->nullable();
+            $table->integer('durasi')->nullable();
             $table->boolean('is_cancelled')->default(false); // Status batal
+
+            $table->index(['ical_link_id', 'start_date', 'end_date']);
 
             $table->timestamps();
         });
