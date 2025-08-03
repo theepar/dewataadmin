@@ -8,7 +8,7 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 
 - **Manajemen Villa**: CRUD data villa, termasuk detail, harga, status kepemilikan, gambar, galeri, dan video.
 - **Manajemen User & Role**: Sistem otentikasi dan otorisasi berbasis peran (admin, pegawai) menggunakan Spatie Permission.
-- **Sinkronisasi Kalender Airbnb**: Otomatis mengunduh dan memproses file iCal (.ics) dari Airbnb, menyimpan event booking ke database.
+- **Sinkronisasi Kalender Airbnb**: Otomatis mengunduh dan memproses file iCal (.ics) dari Airbnb, menyimpan event booking ke database. Sinkronisasi berjalan otomatis setiap 20 menit menggunakan Laravel Scheduler, dan hanya memperbarui data jika ada perubahan pada event booking.
 - **Manajemen Media**: Upload dan pengelolaan gambar/video villa dengan Spatie Media Library.
 - **Admin Panel Filament**: Dashboard modern untuk mengelola semua data, akses dibatasi sesuai peran.
 - **API untuk Mobile**: Endpoint JSON untuk aplikasi mobile, otentikasi dengan Laravel Sanctum.
@@ -70,6 +70,19 @@ Jalankan perintah berikut untuk sinkronisasi manual event booking dari Airbnb:
 php artisan ical:sync
 ```
 Command ini juga dijalankan otomatis setiap 20 menit melalui scheduler.
+
+### Scheduler Otomatis
+
+Untuk menjalankan sinkronisasi otomatis, pastikan scheduler Laravel aktif di server/hosting Anda. Jalankan perintah berikut agar scheduler berjalan di background:
+
+```bash
+php artisan schedule:work
+```
+Atau jika menggunakan cron, tambahkan ke crontab:
+```
+* * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
+```
+Scheduler akan menjalankan sync setiap 20 menit secara otomatis.
 
 ---
 

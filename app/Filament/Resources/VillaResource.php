@@ -90,7 +90,8 @@ class VillaResource extends Resource
                             ->collection('images')
                             ->label('Gambar Utama Villa')
                             ->image()
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->hint('Jika ukuran file di atas 10MB, gambar akan otomatis dikompres setelah upload.')
                             ->maxFiles(1)
                             ->columnSpanFull(),
 
@@ -99,15 +100,17 @@ class VillaResource extends Resource
                             ->label('Galeri Foto Villa')
                             ->image()
                             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->hint('Jika ukuran file di atas 10MB, gambar akan otomatis dikompres setelah upload.')
                             ->multiple()
                             ->reorderable()
+                            ->maxFiles(100)
                             ->columnSpanFull(),
 
                         SpatieMediaLibraryFileUpload::make('video')
                             ->collection('videos')
                             ->label('Video Villa (Opsional)')
                             ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-                            ->maxFiles(1)
+                            ->maxFiles(5)
                             ->columnSpanFull(),
                     ]), // Section ini tidak perlu columns() jika setiap field sudah Full
             ]);
@@ -119,11 +122,11 @@ class VillaResource extends Resource
             ->columns([
                 SpatieMediaLibraryImageColumn::make('image')
                     ->collection('images')
-                    ->label('Gambar')
+                    ->label('Gambar Villa')
                     ->width(80)
                     ->height(80)
                     ->circular()
-                    ->defaultImageUrl(url('/placeholder.png')),
+                    ->getStateUsing(fn($record) => $record->getFirstMediaUrl('images') ?: null),
 
                 TextColumn::make('name')
                     ->label('Nama Villa')
