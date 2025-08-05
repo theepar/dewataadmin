@@ -6,11 +6,13 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 
 ## Fitur Utama
 
-- **Manajemen Villa**: CRUD data villa, termasuk detail, harga, status kepemilikan, gambar, galeri, dan video.
+- **Manajemen Villa**: CRUD data villa, termasuk detail, harga, status kepemilikan, gambar, galeri, video, jumlah kamar (bedroom, bed, bathroom), dan fasilitas (amenities) yang dapat diatur secara dinamis.
 - **Manajemen User & Role**: Sistem otentikasi dan otorisasi berbasis peran (admin, pegawai) menggunakan Spatie Permission.
 - **Sinkronisasi Kalender Airbnb**: Otomatis mengunduh dan memproses file iCal (.ics) dari Airbnb, menyimpan event booking ke database. Sinkronisasi berjalan otomatis setiap 20 menit menggunakan Laravel Scheduler, dan hanya memperbarui data jika ada perubahan pada event booking.
 - **Manajemen Media**: Upload dan pengelolaan gambar/video villa dengan Spatie Media Library.
-- **Admin Panel Filament**: Dashboard modern untuk mengelola semua data, akses dibatasi sesuai peran.
+- **Admin Panel Filament**: Dashboard modern untuk mengelola semua data, akses dibatasi sesuai peran.  
+  - Input/edit **amenities** (fasilitas) menggunakan form repeater (nama + toggle tersedia/tidak).
+  - Input jumlah **bedroom, bed, bathroom** langsung di form.
 - **API untuk Mobile**: Endpoint JSON untuk aplikasi mobile, otentikasi dengan Laravel Sanctum.
 - **Notifikasi**: Integrasi dengan Firebase Cloud Messaging untuk push notifikasi ke aplikasi mobile.
 
@@ -21,8 +23,8 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 - `app/Models` : Model utama (User, Villa, IcalLink, IcalEvent)
 - `app/Filament/Resources` : Resource untuk Filament admin
 - `app/Console/Commands` : Command artisan kustom (sinkronisasi iCal)
-- `database/migrations` : Migrasi database
-- `database/seeders` : Seeder data awal (roles, users, villa)
+- `database/migrations` : Migrasi database (termasuk kolom amenities, bedroom, bed, bathroom pada villa)
+- `database/seeders` : Seeder data awal (roles, users, villa lengkap dengan amenities dan info kamar)
 - `routes/` : Definisi route web dan API
 
 ---
@@ -60,6 +62,10 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 - Akses admin panel di `http://localhost:8000/admin`
 - Endpoint API tersedia di `http://localhost:8000/api`
 - Login dengan user yang sudah di-seed atau buat user baru melalui admin panel
+- **Edit/kelola villa:**  
+  - Input/edit amenities (fasilitas) melalui form repeater di admin panel  
+  - Input jumlah bedroom, bed, bathroom langsung di form villa  
+  - Semua data amenities dan info kamar tersimpan dalam format JSON di database
 
 ---
 
