@@ -5,12 +5,14 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\VillaResource\Pages;
 use App\Models\Villa;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\MultiSelect;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
@@ -48,62 +50,101 @@ class VillaResource extends Resource
                             ->maxLength(255)
                             ->columnSpanFull(),
 
-                        Select::make('ownership_status')
+                        MultiSelect::make('ownership_status')
                             ->label('Status Kepemilikan')
                             ->options([
                                 'Freehold'  => 'Freehold',
                                 'Leasehold' => 'Leasehold',
-                                'Other'     => 'Lainnya',
+                                'Monthly'   => 'Monthly',
                             ])
                             ->required()
                             ->searchable(),
 
                         TextInput::make('price_idr')
                             ->label('Harga (IDR)')
+                            ->required()
                             ->numeric()
-                            ->prefix('Rp')
-                            ->nullable(),
+                            ->prefix('Rp'),
 
-                        TextInput::make('price_usd')
-                            ->label('Harga (USD)')
-                            ->numeric()
-                            ->prefix('$')
-                            ->nullable(),
+                        TextInput::make('location')
+                            ->label('URL Maps')
+                            ->placeholder('https://maps.google.com/...')
+                            ->columnSpanFull()
+                            ->helperText('Tempelkan URL Google Maps lokasi villa di sini.'),
 
                         RichEditor::make('description')
                             ->label('Deskripsi Villa')
                             ->columnSpanFull()
                             ->nullable(),
+
+                        // Tambahkan input kamar, bed, bathroom
+                        TextInput::make('bedroom')
+                            ->label('Jumlah Bedroom')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(1)
+                            ->required(),
+
+                        TextInput::make('bed')
+                            ->label('Jumlah Bed')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(1)
+                            ->required(),
+
+                        TextInput::make('bathroom')
+                            ->label('Jumlah Bathroom')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(1)
+                            ->required(),
                     ])->columns(2),
+
                 Section::make('Media Villa')
                     ->schema([
+                        FileUpload::make('cover_image')
+                            ->label('Cover Villa')
+                            ->image()
+                            ->directory('villa-images')
+                            ->preserveFilenames()
+                            ->maxFiles(1)
+                            ->helperText('Upload gambar utama/cover villa.')
+                            ->default(fn($record) =>
+                                $record
+                                ? $record->media()->where('type', 'image')->pluck('file_path')->take(1)->values()->toArray()
+                                : []
+                            ),
+
                         FileUpload::make('images')
-                            ->label('Gambar Villa')
+                            ->label('Gambar Lain')
                             ->multiple()
                             ->maxFiles(20)
                             ->image()
                             ->directory('villa-images')
                             ->preserveFilenames()
-                            ->helperText('Drag & drop hingga 20 gambar sekaligus.')
-                            ->default(fn($record) => $record?->media()->where('type', 'image')->pluck('file_path')->toArray() ?? [])
-                            ->deletable(true), // agar bisa hapus langsung
+                            ->helperText('Drag & drop hingga 20 gambar tambahan.')
+                            ->default(fn($record) =>
+                                $record
+                                ? $record->media()->where('type', 'image')->pluck('file_path')->skip(1)->values()->toArray()
+                                : []
+                            ),
+                    ]),
 
-                        Select::make('cover_image')
-                            ->label('Pilih Cover')
-                            ->options(fn($get) => collect($get('images'))->mapWithKeys(fn($img) => [$img => basename($img)]))
-                            ->required()
-                            ->helperText('Pilih salah satu gambar sebagai cover villa.'),
-
-                        FileUpload::make('video')
-                            ->label('Video Villa')
-                            ->maxFiles(1)
-                            ->maxSize(51200) // 50MB
-                            ->acceptedFileTypes(['video/mp4', 'video/avi', 'video/mov'])
-                            ->directory('villa-videos')
-                            ->preserveFilenames()
-                            ->helperText('Upload 1 video saja (mp4, avi, mov). Maksimal ukuran 50MB.')
-                            ->getStateUsing(fn($record) => $record?->media()->where('type', 'video')->pluck('file_path')->toArray() ?? [])
-                            ->deletable(true),
+                Section::make('Fasilitas Villa')
+                    ->schema([
+                        Repeater::make('amenities')
+                            ->label('Amenities')
+                            ->schema([
+                                TextInput::make('name')
+                                    ->label('Amenity Name')
+                                    ->required(),
+                                Toggle::make('available')
+                                    ->label('Available')
+                                    ->default(true),
+                            ])
+                            ->addActionLabel('Tambah Amenity')
+                            ->minItems(1)
+                            ->columns(2),
                     ]),
             ]);
     }
@@ -115,7 +156,7 @@ class VillaResource extends Resource
                 ImageColumn::make('media')
                     ->label('Cover')
                     ->getStateUsing(fn($record) =>
-                        optional($record->media()->where('is_cover', true)->first())->file_path ?? optional($record->media()->where('type', 'image')->first())->file_path
+                        optional($record->media()->where('type', 'image')->first())->file_path
                     )
                     ->disk('public')
                     ->circular(),
@@ -126,16 +167,12 @@ class VillaResource extends Resource
                 TextColumn::make('ownership_status')
                     ->label('Status Kepemilikan')
                     ->badge()
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => is_array($state) ? implode(', ', $state) : $state),
                 TextColumn::make('price_idr')
                     ->label('Harga (IDR)')
                     ->money('idr')
                     ->sortable(),
-                TextColumn::make('price_usd')
-                    ->label('Harga (USD)')
-                    ->money('usd')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label('Dibuat Pada')
                     ->dateTime()
@@ -148,7 +185,7 @@ class VillaResource extends Resource
                     ->options([
                         'Freehold'  => 'Freehold',
                         'Leasehold' => 'Leasehold',
-                        'Other'     => 'Lainnya',
+                        'Monthly'   => 'Monthly',
                     ]),
             ])
             ->actions([
@@ -160,7 +197,15 @@ class VillaResource extends Resource
                     ->modalHeading('Preview Villa')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
-                    ->modalContent(fn($record) => view('filament.modals.villa-preview', ['villa' => $record])),
+                    ->modalContent(fn($record) => view('filament.modals.villa-preview', [
+                        'villa'    => $record,
+                        // Tambahkan ini jika ownership_status perlu dipecah untuk badge di blade:
+                        'statuses' => is_array($record->ownership_status)
+                        ? $record->ownership_status
+                        : (is_string($record->ownership_status) && ! empty($record->ownership_status)
+                            ? explode(',', $record->ownership_status)
+                            : []),
+                    ])),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

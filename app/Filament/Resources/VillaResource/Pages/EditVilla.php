@@ -19,46 +19,84 @@ class EditVilla extends EditRecord
 
     protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
-        $oldImages     = $record->media()->where('type', 'image')->pluck('file_path')->toArray();
-        $newImages     = $data['images'] ?? [];
-        $deletedImages = array_diff($oldImages, $newImages);
+        // Ambil semua gambar lama milik property ini
+        $oldImages = $record->media()->where('type', 'image')->pluck('file_path')->toArray();
+        $newImages = $data['images'] ?? [];
+        $cover     = $data['cover_image'][0] ?? null;
 
+        // Ambil cover lama (gambar pertama)
+        $oldCover = $record->media()->where('type', 'image')->pluck('file_path')->first();
+
+        // Gabungkan cover dan images baru untuk membandingkan dengan gambar lama
+        $allNewImages = $newImages;
+        if ($cover) {
+            array_unshift($allNewImages, $cover);
+        }
+
+        // Hapus gambar yang dihapus user (tidak ada di input baru)
+        $deletedImages = array_diff($oldImages, $allNewImages);
         foreach ($deletedImages as $img) {
             Storage::disk('public')->delete($img);
             \App\Models\VillaMedia::where('villa_id', $record->id)->where('file_path', $img)->delete();
         }
 
-        $images = $data['images'] ?? [];
-        $video  = $data['video'][0] ?? null;
-        unset($data['images'], $data['video']);
+        // Update/replace cover jika diganti
+        if ($cover && $oldCover && $cover !== $oldCover) {
+            // Hapus cover lama
+            Storage::disk('public')->delete($oldCover);
+            \App\Models\VillaMedia::where('villa_id', $record->id)->where('file_path', $oldCover)->delete();
 
-        $record->update($data);
-
-        // Hapus media lama (opsional, jika ingin replace)
-        \App\Models\VillaMedia::where('villa_id', $record->id)->delete();
-
-        // Simpan gambar baru ke database
-        foreach ($images as $img) {
-            if ($img && str_contains($img, '/')) { // pastikan path valid
+            // Simpan cover baru jika upload baru
+            if ($cover instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                $path     = $cover->store('villa-images', 'public');
+                $fileName = $cover->getClientOriginalName();
                 \App\Models\VillaMedia::create([
                     'villa_id'  => $record->id,
-                    'file_path' => $img,
-                    'file_name' => basename($img),
+                    'file_path' => $path,
+                    'file_name' => $fileName,
                     'type'      => 'image',
-                    'is_cover'  => false,
                 ]);
+            } elseif (is_string($cover) && str_contains($cover, '/')) {
+                // Jika cover sudah ada di storage, simpan ke DB jika belum ada
+                if (! in_array($cover, $oldImages)) {
+                    \App\Models\VillaMedia::create([
+                        'villa_id'  => $record->id,
+                        'file_path' => $cover,
+                        'file_name' => basename($cover),
+                        'type'      => 'image',
+                    ]);
+                }
             }
         }
 
-        if ($video && str_contains($video, '/')) { // pastikan path valid
-            \App\Models\VillaMedia::create([
-                'villa_id'  => $record->id,
-                'file_path' => $video,
-                'file_name' => basename($video),
-                'type'      => 'video',
-                'is_cover'  => false,
-            ]);
+        // Simpan gambar lain (hanya yang baru diupload)
+        foreach ($newImages as $img) {
+            if ($img instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                $path     = $img->store('villa-images', 'public');
+                $fileName = $img->getClientOriginalName();
+                \App\Models\VillaMedia::create([
+                    'villa_id'  => $record->id,
+                    'file_path' => $path,
+                    'file_name' => $fileName,
+                    'type'      => 'image',
+                ]);
+            } elseif (is_string($img) && str_contains($img, '/')) {
+                // Jika gambar lama sudah ada, tidak perlu upload ulang
+                if (! in_array($img, $oldImages)) {
+                    \App\Models\VillaMedia::create([
+                        'villa_id'  => $record->id,
+                        'file_path' => $img,
+                        'file_name' => basename($img),
+                        'type'      => 'image',
+                    ]);
+                }
+            }
         }
+
+        unset($data['cover_image'], $data['images'], $data['video']);
+
+        // Tambahkan baris ini agar data utama villa (termasuk ownership_status) ikut terupdate:
+        $record->update($data);
 
         return $record;
     }

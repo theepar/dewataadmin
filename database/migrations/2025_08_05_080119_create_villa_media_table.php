@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('file_path');
             $table->string('file_name');
             $table->enum('type', ['image', 'video']);
-            $table->boolean('is_cover')->default(false);
             $table->timestamps();
         });
     }

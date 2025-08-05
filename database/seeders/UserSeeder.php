@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
         // Membuat Akun Admin
         $admin = User::create([
             'name'     => 'Admin',
-            'email'    => 'admin@example.com',
+            'email'    => 'admin@dcm.com',
             'password' => Hash::make('password'),
         ]);
         $admin->assignRole('admin');
@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
         // Membuat Akun Pegawai
         $pegawai = User::create([
             'name'     => 'Pegawai',
-            'email'    => 'pegawai@example.com',
+            'email'    => 'pegawai@dcm.com',
             'password' => Hash::make('password'),
         ]);
         $pegawai->assignRole('pegawai');

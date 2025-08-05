@@ -12,12 +12,22 @@ class Villa extends Model
         'name',
         'ownership_status',
         'price_idr',
-        'price_usd',
         'description',
+        'location',
+        'bedroom',
+        'bed',
+        'bathroom',
+        'amenities',
+        // tambahkan field lain jika ada
+    ];
+
+    protected $casts = [
+        'amenities'        => 'array',
+        'ownership_status' => 'array',
     ];
 
     public function media()
     {
-        return $this->hasMany(VillaMedia::class);
+        return $this->hasMany(\App\Models\VillaMedia::class, 'villa_id');
     }
 }

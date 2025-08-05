@@ -10,33 +10,56 @@ class CreateVilla extends CreateRecord
 
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
+        $cover  = $data['cover_image'][0] ?? null;
         $images = $data['images'] ?? [];
-        $cover  = $data['cover_image'] ?? null;
-        $video  = $data['video'][0] ?? null;
-        unset($data['images'], $data['cover_image'], $data['video']);
+        unset($data['cover_image'], $data['images'], $data['video']);
 
+        // Pastikan ownership_status tetap array (untuk kolom json)
+        if (isset($data['ownership_status']) && is_array($data['ownership_status'])) {
+            $data['ownership_status'] = array_values($data['ownership_status']);
+        }
+
+        // Buat villa baru
         $villa = static::getModel()::create($data);
 
+        // Simpan cover image (jika ada)
+        if ($cover instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+            $path     = $cover->store('villa-images', 'public');
+            $fileName = $cover->getClientOriginalName();
+            \App\Models\VillaMedia::create([
+                'villa_id'  => $villa->id,
+                'file_path' => $path,
+                'file_name' => $fileName,
+                'type'      => 'image',
+            ]);
+        } elseif (is_string($cover) && str_contains($cover, '/')) {
+            \App\Models\VillaMedia::create([
+                'villa_id'  => $villa->id,
+                'file_path' => $cover,
+                'file_name' => basename($cover),
+                'type'      => 'image',
+            ]);
+        }
+
+        // Simpan gambar lain (bisa banyak)
         foreach ($images as $img) {
-            if ($img && str_contains($img, '/')) {
+            if ($img instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                $path     = $img->store('villa-images', 'public');
+                $fileName = $img->getClientOriginalName();
+                \App\Models\VillaMedia::create([
+                    'villa_id'  => $villa->id,
+                    'file_path' => $path,
+                    'file_name' => $fileName,
+                    'type'      => 'image',
+                ]);
+            } elseif (is_string($img) && str_contains($img, '/')) {
                 \App\Models\VillaMedia::create([
                     'villa_id'  => $villa->id,
                     'file_path' => $img,
                     'file_name' => basename($img),
                     'type'      => 'image',
-                    'is_cover'  => $img === $cover,
                 ]);
             }
-        }
-
-        if ($video && str_contains($video, '/')) {
-            \App\Models\VillaMedia::create([
-                'villa_id'  => $villa->id,
-                'file_path' => $video,
-                'file_name' => basename($video),
-                'type'      => 'video',
-                'is_cover'  => false,
-            ]);
         }
 
         return $villa;

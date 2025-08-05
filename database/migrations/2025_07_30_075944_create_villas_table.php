@@ -14,10 +14,14 @@ return new class extends Migration
         Schema::create('villas', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('ownership_status', ['Freehold', 'Leasehold', 'Other']);
+            $table->json('ownership_status')->nullable(); // Ubah ke json
             $table->unsignedBigInteger('price_idr')->default(0);
-            $table->unsignedBigInteger('price_usd')->default(0);
             $table->text('description')->nullable();
+            $table->string('location')->nullable();
+            $table->json('amenities')->nullable();
+            $table->unsignedTinyInteger('bedroom')->default(1);
+            $table->unsignedTinyInteger('bed')->default(1);
+            $table->unsignedTinyInteger('bathroom')->default(1);
             $table->timestamps();
         });
     }

@@ -1,13 +1,13 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User; // Pastikan model User Anda diimpor
-use Illuminate\Validation\ValidationException; // Untuk penanganan error validasi
+use Illuminate\Support\Facades\Hash; // Pastikan model User Anda diimpor
+use Illuminate\Validation\ValidationException;
+
+// Untuk penanganan error validasi
 
 class AuthController extends Controller
 {
@@ -20,30 +20,30 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'email'       => 'required|email',
+            'password'    => 'required',
             'device_name' => 'required', // Nama perangkat dari aplikasi mobile
         ]);
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Kredensial yang diberikan tidak cocok dengan catatan kami.'],
             ]);
         }
 
         // Hapus token lama jika ada (opsional, tergantung kebijakan Anda)
-        // $user->tokens()->where('name', $request->device_name)->delete();
+        $user->tokens()->where('name', $request->device_name)->delete();
 
         // Buat token baru
         $token = $user->createToken($request->device_name)->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil!',
-            'user' => $user->only('id', 'name', 'email'), // Kirim data user yang relevan
-            'token' => $token,
-            'roles' => $user->getRoleNames(), // Kirim peran user
+            'user'    => $user->only('id', 'name', 'email'), // Kirim data user yang relevan
+            'token'   => $token,
+            'roles'   => $user->getRoleNames(), // Kirim peran user
         ]);
     }
 
@@ -65,14 +65,14 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
@@ -86,9 +86,9 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Registrasi berhasil!',
-            'user' => $user->only('id', 'name', 'email'),
-            'token' => $token,
-            'roles' => $user->getRoleNames(),
+            'user'    => $user->only('id', 'name', 'email'),
+            'token'   => $token,
+            'roles'   => $user->getRoleNames(),
         ], 201);
     }
 }
