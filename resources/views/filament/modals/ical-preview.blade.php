@@ -1,6 +1,3 @@
-@php
-    // $icalUrl dan $events sudah tersedia dari controller/modal
-@endphp
 <div>
     @if (isset($events['error']))
         <span class="text-red-600">{{ $events['error'] }}</span>

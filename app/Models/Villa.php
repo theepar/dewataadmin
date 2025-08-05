@@ -3,12 +3,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Villa extends Model implements HasMedia
+class Villa extends Model
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory;
 
     protected $fillable = [
         'name',
@@ -18,20 +16,8 @@ class Villa extends Model implements HasMedia
         'description',
     ];
 
-    /**
-     * Mendefinisikan koleksi media untuk Villa.
-     */
-    public function registerMediaCollections(): void
+    public function media()
     {
-        // Gambar utama (hanya satu file)
-        $this->addMediaCollection('image')
-            ->singleFile();
-
-        // Galeri (bisa banyak file)
-        $this->addMediaCollection('gallery');
-
-        // Video (hanya satu file)
-        $this->addMediaCollection('video')
-            ->singleFile();
+        return $this->hasMany(VillaMedia::class);
     }
 }

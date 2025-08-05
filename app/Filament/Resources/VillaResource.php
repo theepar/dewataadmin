@@ -1,38 +1,33 @@
 <?php
-
 namespace App\Filament\Resources;
 
 // --- NAMESPACE DASAR FILAMENT ---
 use App\Filament\Resources\VillaResource\Pages;
-use App\Models\Villa; // Model Villa Anda
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables\Table;
+use App\Models\Villa;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\Section; // << TAMBAH: Untuk mengelompokkan field
-
-// --- IMPORTS UNTUK KOMPONEN FILAMENT TABLES ---
-use Filament\Tables;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
-
-// --- IMPORTS UNTUK ELOQUENT & LAINNYA ---
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope; // Opsional: jika menggunakan soft delete
-use Illuminate\Support\Facades\Auth; // Untuk Auth::user()
-use Filament\Support\Colors\Color; // Pastikan ini ada
-
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class VillaResource extends Resource
 {
-    protected static ?string $model = Villa::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-home';
+    protected static ?string $model           = Villa::class;
+    protected static ?string $navigationIcon  = 'heroicon-o-home';
     protected static ?string $navigationGroup = 'Properti';
 
     public static function canAccess(): bool
@@ -44,9 +39,8 @@ class VillaResource extends Resource
     {
         return $form
             ->schema([
-                // --- BAGIAN 1: INFORMASI DASAR VILLA ---
-                Section::make('Informasi Dasar Villa') // Judul bagian
-                    ->description('Detail utama tentang properti ini.') // Deskripsi opsional
+                Section::make('Informasi Dasar Villa')
+                    ->description('Detail utama tentang properti ini.')
                     ->schema([
                         TextInput::make('name')
                             ->label('Nama Villa')
@@ -57,9 +51,9 @@ class VillaResource extends Resource
                         Select::make('ownership_status')
                             ->label('Status Kepemilikan')
                             ->options([
-                                'Freehold' => 'Freehold',
+                                'Freehold'  => 'Freehold',
                                 'Leasehold' => 'Leasehold',
-                                'Other' => 'Lainnya',
+                                'Other'     => 'Lainnya',
                             ])
                             ->required()
                             ->searchable(),
@@ -80,39 +74,37 @@ class VillaResource extends Resource
                             ->label('Deskripsi Villa')
                             ->columnSpanFull()
                             ->nullable(),
-                    ])->columns(2), // Layout 2 kolom di dalam section ini
-
-                // --- BAGIAN 2: PENGELOLAAN MEDIA (GAMBAR & VIDEO) ---
-                Section::make('Media Properti') // Judul bagian media
-                    ->description('Unggah gambar dan video untuk villa ini.')
+                    ])->columns(2),
+                Section::make('Media Villa')
                     ->schema([
-                        SpatieMediaLibraryFileUpload::make('image')
-                            ->collection('images')
-                            ->label('Gambar Utama Villa')
-                            ->image()
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                            ->hint('Jika ukuran file di atas 10MB, gambar akan otomatis dikompres setelah upload.')
-                            ->maxFiles(1)
-                            ->columnSpanFull(),
-
-                        SpatieMediaLibraryFileUpload::make('gallery')
-                            ->collection('gallery')
-                            ->label('Galeri Foto Villa')
-                            ->image()
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                            ->hint('Jika ukuran file di atas 10MB, gambar akan otomatis dikompres setelah upload.')
+                        FileUpload::make('images')
+                            ->label('Gambar Villa')
                             ->multiple()
-                            ->reorderable()
-                            ->maxFiles(100)
-                            ->columnSpanFull(),
+                            ->maxFiles(20)
+                            ->image()
+                            ->directory('villa-images')
+                            ->preserveFilenames()
+                            ->helperText('Drag & drop hingga 20 gambar sekaligus.')
+                            ->default(fn($record) => $record?->media()->where('type', 'image')->pluck('file_path')->toArray() ?? [])
+                            ->deletable(true), // agar bisa hapus langsung
 
-                        SpatieMediaLibraryFileUpload::make('video')
-                            ->collection('videos')
-                            ->label('Video Villa (Opsional)')
-                            ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/ogg'])
-                            ->maxFiles(5)
-                            ->columnSpanFull(),
-                    ]), // Section ini tidak perlu columns() jika setiap field sudah Full
+                        Select::make('cover_image')
+                            ->label('Pilih Cover')
+                            ->options(fn($get) => collect($get('images'))->mapWithKeys(fn($img) => [$img => basename($img)]))
+                            ->required()
+                            ->helperText('Pilih salah satu gambar sebagai cover villa.'),
+
+                        FileUpload::make('video')
+                            ->label('Video Villa')
+                            ->maxFiles(1)
+                            ->maxSize(51200) // 50MB
+                            ->acceptedFileTypes(['video/mp4', 'video/avi', 'video/mov'])
+                            ->directory('villa-videos')
+                            ->preserveFilenames()
+                            ->helperText('Upload 1 video saja (mp4, avi, mov). Maksimal ukuran 50MB.')
+                            ->getStateUsing(fn($record) => $record?->media()->where('type', 'video')->pluck('file_path')->toArray() ?? [])
+                            ->deletable(true),
+                    ]),
             ]);
     }
 
@@ -120,14 +112,13 @@ class VillaResource extends Resource
     {
         return $table
             ->columns([
-                SpatieMediaLibraryImageColumn::make('image')
-                    ->collection('images')
-                    ->label('Gambar Villa')
-                    ->width(80)
-                    ->height(80)
-                    ->circular()
-                    ->getStateUsing(fn($record) => $record->getFirstMediaUrl('images') ?: null),
-
+                ImageColumn::make('media')
+                    ->label('Cover')
+                    ->getStateUsing(fn($record) =>
+                        optional($record->media()->where('is_cover', true)->first())->file_path ?? optional($record->media()->where('type', 'image')->first())->file_path
+                    )
+                    ->disk('public')
+                    ->circular(),
                 TextColumn::make('name')
                     ->label('Nama Villa')
                     ->searchable()
@@ -152,38 +143,43 @@ class VillaResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('ownership_status')
+                SelectFilter::make('ownership_status')
                     ->label('Filter Status Kepemilikan')
                     ->options([
-                        'Freehold' => 'Freehold',
+                        'Freehold'  => 'Freehold',
                         'Leasehold' => 'Leasehold',
-                        'Other' => 'Lainnya',
+                        'Other'     => 'Lainnya',
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+                Action::make('preview')
+                    ->label('Preview')
+                    ->icon('heroicon-o-eye')
+                    ->modalHeading('Preview Villa')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(fn($record) => view('filament.modals.villa-preview', ['villa' => $record])),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListVillas::route('/'),
+            'index'  => Pages\ListVillas::route('/'),
             'create' => Pages\CreateVilla::route('/create'),
-            'edit' => Pages\EditVilla::route('/{record}/edit'),
+            'edit'   => Pages\EditVilla::route('/{record}/edit'),
         ];
     }
 }
