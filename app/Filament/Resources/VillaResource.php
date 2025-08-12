@@ -9,6 +9,7 @@ use Filament\Forms\Components\MultiSelect;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
 use Filament\Forms\Components\TextInput;
@@ -98,6 +99,14 @@ class VillaResource extends Resource
                             ->minValue(0)
                             ->default(1)
                             ->required(),
+
+                        Select::make('users')
+                            ->label('Pegawai yang bisa melihat villa ini')
+                            ->multiple(false)
+                            ->relationship('users', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Admin bisa melihat semua villa, pegawai hanya villa yang di-assign.'),
                     ])->columns(2),
 
                 Section::make('Media Villa')
@@ -136,8 +145,7 @@ class VillaResource extends Resource
                             ->label('Amenities')
                             ->schema([
                                 TextInput::make('name')
-                                    ->label('Amenity Name')
-                                    ->required(),
+                                    ->label('Amenity Name'),
                                 Toggle::make('available')
                                     ->label('Available')
                                     ->default(true),

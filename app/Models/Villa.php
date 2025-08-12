@@ -30,4 +30,8 @@ class Villa extends Model
     {
         return $this->hasMany(\App\Models\VillaMedia::class, 'villa_id');
     }
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'villa_user');
+    }
 }
