@@ -27,9 +27,3 @@ Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showRese
 Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
 
 Route::middleware('website.api')->get('/website/villas', [VillaController::class, 'websiteIndex']);
-
-// storage:link
-Route::get('/storage-link', function () {
-    \Artisan::call('storage:link');
-    return 'storage:link berhasil dijalankan';
-});
