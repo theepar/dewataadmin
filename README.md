@@ -1,31 +1,77 @@
 # Dewata Management Backend
 
-Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisasi kalender eksternal (Airbnb iCal). Sistem ini mengintegrasikan panel admin Filament, manajemen media, peran pengguna, dan API untuk aplikasi mobile.
+Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisasi kalender eksternal (Airbnb iCal). Sistem ini mengintegrasikan panel admin Filament, manajemen media, peran pengguna, dan API untuk aplikasi mobile dan website.
 
 ---
 
 ## Fitur Utama
 
-- **Manajemen Villa**: CRUD data villa, termasuk detail, harga, status kepemilikan, gambar, galeri, video, jumlah kamar (bedroom, bed, bathroom), dan fasilitas (amenities) yang dapat diatur secara dinamis.
-- **Manajemen User & Role**: Sistem otentikasi dan otorisasi berbasis peran (admin, pegawai) menggunakan Spatie Permission.
-- **Sinkronisasi Kalender Airbnb**: Otomatis mengunduh dan memproses file iCal (.ics) dari Airbnb, menyimpan event booking ke database. Sinkronisasi berjalan otomatis setiap 20 menit menggunakan Laravel Scheduler, dan hanya memperbarui data jika ada perubahan pada event booking.
-- **Manajemen Media**: Upload dan pengelolaan gambar/video villa dengan Spatie Media Library.
-- **Admin Panel Filament**: Dashboard modern untuk mengelola semua data, akses dibatasi sesuai peran.  
-  - Input/edit **amenities** (fasilitas) menggunakan form repeater (nama + toggle tersedia/tidak).
-  - Input jumlah **bedroom, bed, bathroom** langsung di form.
-- **API untuk Mobile**: Endpoint JSON untuk aplikasi mobile, otentikasi dengan Laravel Sanctum.
-- **Notifikasi**: Integrasi dengan Firebase Cloud Messaging untuk push notifikasi ke aplikasi mobile.
+- **Manajemen Villa**
+  - CRUD data villa: nama, harga, status kepemilikan, deskripsi, gambar, galeri, video.
+  - Info kamar: jumlah bedroom, bed, bathroom.
+  - Fasilitas (amenities): input/edit dinamis via repeater, tersimpan dalam format JSON.
+  - Relasi villa dengan media (gambar/video) dan pegawai (setiap villa hanya bisa dikelola satu pegawai, admin bisa akses semua).
+- **Manajemen User & Role**
+  - Otentikasi dan otorisasi berbasis peran (admin, pegawai) menggunakan Spatie Permission.
+  - Pegawai hanya bisa melihat dan mengelola villa miliknya sendiri.
+  - Admin bisa mengelola semua data.
+- **Sinkronisasi Kalender Airbnb**
+  - Otomatis unduh dan proses file iCal (.ics) dari Airbnb.
+  - Event booking disimpan di tabel `ical_events`.
+  - Sinkronisasi otomatis setiap 20 menit via Laravel Scheduler.
+  - Hanya update jika ada perubahan event booking.
+- **Manajemen Media**
+  - Upload dan pengelolaan gambar/video villa dengan Spatie Media Library.
+  - Gambar villa tersimpan di tabel `villa_media` dan relasi ke villa.
+- **Admin Panel Filament**
+  - Dashboard modern untuk mengelola semua data, akses dibatasi sesuai peran.
+  - Input/edit amenities dan info kamar langsung di form.
+  - Generate dan kelola API key website untuk akses data villa dari frontend.
+- **API untuk Mobile & Website**
+  - Endpoint JSON untuk aplikasi mobile (autentikasi dengan Laravel Sanctum).
+  - Endpoint khusus website dengan API key (header `Admin`), bisa akses semua villa.
+  - Data villa, event, dan link iCal bisa diakses sesuai role dan API key.
+- **Notifikasi**
+  - Integrasi dengan Firebase Cloud Messaging untuk push notifikasi ke aplikasi mobile.
+- **History Login**
+  - Setiap login user tercatat di tabel `login_histories` (IP, device, waktu login).
+  - History login hanya bisa dilihat oleh user sendiri di dashboard.
+- **Website API Key Management**
+  - Admin dapat generate API key unik untuk tiap website frontend.
+  - API key diverifikasi di backend sebelum mengirim data villa.
 
 ---
 
-## Struktur Folder
+## Struktur Database
 
-- `app/Models` : Model utama (User, Villa, IcalLink, IcalEvent)
-- `app/Filament/Resources` : Resource untuk Filament admin
-- `app/Console/Commands` : Command artisan kustom (sinkronisasi iCal)
-- `database/migrations` : Migrasi database (termasuk kolom amenities, bedroom, bed, bathroom pada villa)
-- `database/seeders` : Seeder data awal (roles, users, villa lengkap dengan amenities dan info kamar)
-- `routes/` : Definisi route web dan API
+- **users**: Data user, role, otentikasi.
+- **villas**: Data villa (nama, harga, deskripsi, status, info kamar, amenities).
+- **villa_media**: Gambar/video villa, relasi ke villa.
+- **villa_user**: Relasi villa dengan user (pegawai).
+- **ical_links**: Link iCal Airbnb, relasi ke villa dan user.
+- **ical_events**: Event booking dari iCal (summary, tanggal, status, tamu, dll).
+- **login_histories**: History login user (user_id, IP, device, waktu login).
+- **website_api_keys**: API key untuk website frontend (website_name, api_key).
+
+---
+
+## Endpoint API
+
+| Controller         | Endpoint                       | Keterangan                                    |
+|--------------------|-------------------------------|------------------------------------------------|
+| AuthController     | POST `/api/login`              | Login user (mobile/admin/pegawai)              |
+|                    | POST `/api/logout`             | Logout user                                    |
+| VillaController    | GET `/api/villas`              | Get villa (admin/pegawai, sesuai role)         |
+|                    | GET `/api/villas/{id}`         | Get detail villa (admin/pegawai, sesuai role)  |
+|                    | GET `/api/website/villas`      | Get semua villa untuk website (pakai API key)  |
+| IcalLinkController | GET `/api/ical-links`          | Get semua iCal link (admin/pegawai)            |
+|                    | GET `/api/ical-links/{id}`     | Get detail iCal link                           |
+| IcalEventController| GET `/api/ical-events`         | Get semua event booking                        |
+|                    | GET `/api/ical-events/{id}`    | Get detail event booking                       |
+
+**Catatan:**  
+- Endpoint `/api/website/villas` hanya bisa diakses dengan header `Admin: <api_key>`.
+- Endpoint lain menggunakan autentikasi token (Sanctum).
 
 ---
 
@@ -62,10 +108,8 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 - Akses admin panel di `http://localhost:8000/admin`
 - Endpoint API tersedia di `http://localhost:8000/api`
 - Login dengan user yang sudah di-seed atau buat user baru melalui admin panel
-- **Edit/kelola villa:**  
-  - Input/edit amenities (fasilitas) melalui form repeater di admin panel  
-  - Input jumlah bedroom, bed, bathroom langsung di form villa  
-  - Semua data amenities dan info kamar tersimpan dalam format JSON di database
+- Kelola villa, user, media, amenities, dan API key website dari dashboard Filament
+- Website frontend dapat mengambil data villa dengan API key yang digenerate admin
 
 ---
 
@@ -89,6 +133,23 @@ Atau jika menggunakan cron, tambahkan ke crontab:
 * * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
 ```
 Scheduler akan menjalankan sync setiap 20 menit secara otomatis.
+
+---
+
+## Cara Integrasi Website Frontend
+
+1. Admin generate API key di dashboard Filament.
+2. Copy API key ke konfigurasi website frontend (misal `.env` Next.js).
+3. Website frontend fetch data villa dengan header:
+   ```
+   Admin: <api_key>
+   ```
+   Contoh di Next.js:
+   ```js
+   fetch('https://your-backend-domain.com/api/website/villas', {
+     headers: { 'Admin': process.env.NEXT_PUBLIC_VILLA_API_KEY }
+   })
+   ```
 
 ---
 
