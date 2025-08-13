@@ -14,6 +14,8 @@ return [
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
+        'web',
+        'admin.only',
     ],
     'auth'                    => [
         'guard' => 'web',

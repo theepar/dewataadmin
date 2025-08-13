@@ -1,12 +1,10 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\IcalEvent;
+use App\Models\Villa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class IcalEventController extends Controller
 {
@@ -20,52 +18,48 @@ class IcalEventController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        if ($user->hasRole('admin')) {
-            // Admin melihat semua iCal events
-            $icalEvents = IcalEvent::with('icalLink.villa')->get();
-        } else {
-            // Pegawai hanya melihat iCal events yang terkait dengan villa yang mereka kelola
+        $query = \App\Models\IcalEvent::with('icalLink.villa.media');
+        if ($user->hasRole('pegawai')) {
             $managedVillaIds = $user->villas->pluck('id');
-
-            $icalEvents = IcalEvent::whereHas('icalLink.villa', function ($query) use ($managedVillaIds) {
-                $query->whereIn('id', $managedVillaIds);
-            })->with('icalLink.villa')->get();
+            $query->whereHas('icalLink.villa', function ($q) use ($managedVillaIds) {
+                $q->whereIn('id', $managedVillaIds);
+            });
         }
 
-        // Transformasi data untuk response API
+        $icalEvents = $query->get();
+
         return response()->json([
             'message' => 'iCal events retrieved successfully',
-            'data' => $icalEvents->map(function($event) {
-                // Mengambil harga dari villa yang terkait
-                $priceIdr = $event->icalLink->villa->price_idr ?? null;
-                $priceUsd = $event->icalLink->villa->price_usd ?? null;
-
+            'data'    => $icalEvents->map(function ($event) {
+                $villa = $event->icalLink->villa ?? null;
                 return [
-                    'id' => $event->id,
-                    'uid' => $event->uid,
-                    'summary' => $event->summary,
-                    'description' => $event->description,
-                    'start_date' => $event->start_date ? $event->start_date->format('Y-m-d H:i:s') : null,
-                    'end_date' => $event->end_date ? $event->end_date->format('Y-m-d H:i:s') : null,
-                    'status' => $event->status,
-                    'guest_name' => $event->guest_name,
+                    'id'             => $event->id,
+                    'ical_link_id'   => $event->ical_link_id,
+                    'uid'            => $event->uid,
+                    'summary'        => $event->summary,
+                    'description'    => $event->description,
+                    'start_date'     => $event->start_date,
+                    'end_date'       => $event->end_date,
+                    'status'         => $event->status,
+                    'guest_name'     => $event->guest_name,
                     'reservation_id' => $event->reservation_id,
-                    'is_cancelled' => (bool) $event->is_cancelled,
-                    'ical_link_id' => $event->ical_link_id,
-                    'villa' => [
-                        'id' => $event->icalLink->villa->id ?? null,
-                        'name' => $event->icalLink->villa->name ?? null,
-                        'ownership_status' => $event->icalLink->villa->ownership_status ?? null,
-                        'price_idr' => $priceIdr,
-                        'price_usd' => $priceUsd,
-                        // Jika Anda sudah mengimplementasikan Media Library untuk Villa, Anda bisa tambahkan URL gambar di sini
-                        // 'main_image_url' => $event->icalLink->villa->getFirstMediaUrl('images'),
+                    'property_name'  => $event->property_name,
+                    'jumlah_orang'   => $event->jumlah_orang,
+                    'durasi'         => $event->durasi,
+                    'is_cancelled'   => (bool) $event->is_cancelled,
+                    'created_at'     => $event->created_at,
+                    'updated_at'     => $event->updated_at,
+                    'villa'          => [
+                        'id'     => $villa->id ?? null,
+                        'name'   => $villa->name ?? null,
+                        'images' => $villa && $villa->media
+                        ? $villa->media->map(fn($media) => asset('storage/' . $media->file_path))->values()
+                        : [],
                     ],
-                    'last_synced_at' => $event->icalLink->last_synced_at ? $event->icalLink->last_synced_at->format('Y-m-d H:i:s') : null,
                 ];
             }),
         ]);
@@ -81,46 +75,34 @@ class IcalEventController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $icalEvent = IcalEvent::with('icalLink.villa')->find($id);
+        $villa = Villa::with('media')->find($id);
 
-        if (!$icalEvent) {
-            return response()->json(['message' => 'Event not found'], 404);
+        if (! $villa) {
+            return response()->json(['message' => 'Villa not found'], 404);
         }
 
-        // Otorisasi: Pegawai hanya bisa melihat event yang terkait dengan villa yang mereka kelola
         if ($user->hasRole('pegawai')) {
-            $managedVillaIds = $user->villas->pluck('id');
-            if (!in_array($icalEvent->icalLink->villa->id, $managedVillaIds->toArray())) {
+            // Pegawai hanya bisa lihat villa yang dia kelola
+            if (! $user->villas->pluck('id')->contains($villa->id)) {
                 return response()->json(['message' => 'Forbidden: You do not manage this villa.'], 403);
             }
         }
 
         return response()->json([
-            'message' => 'iCal event retrieved successfully',
-            'data' => [
-                'id' => $icalEvent->id,
-                'uid' => $icalEvent->uid,
-                'summary' => $icalEvent->summary,
-                'description' => $icalEvent->description,
-                'start_date' => $icalEvent->start_date ? $icalEvent->start_date->format('Y-m-d H:i:s') : null,
-                'end_date' => $icalEvent->end_date ? $icalEvent->end_date->format('Y-m-d H:i:s') : null,
-                'status' => $icalEvent->status,
-                'guest_name' => $icalEvent->guest_name,
-                'reservation_id' => $icalEvent->reservation_id,
-                'is_cancelled' => (bool) $icalEvent->is_cancelled,
-                'ical_link_id' => $icalEvent->ical_link_id,
-                'villa' => [
-                    'id' => $icalEvent->icalLink->villa->id ?? null,
-                    'name' => $icalEvent->icalLink->villa->name ?? null,
-                    'ownership_status' => $icalEvent->icalLink->villa->ownership_status ?? null,
-                    'price_idr' => $icalEvent->icalLink->villa->price_idr ?? null,
-                    'price_usd' => $icalEvent->icalLink->villa->price_usd ?? null,
-                ],
-                'last_synced_at' => $icalEvent->icalLink->last_synced_at ? $icalEvent->icalLink->last_synced_at->format('Y-m-d H:i:s') : null,
+            'message' => 'Villa retrieved successfully',
+            'data'    => [
+                'id'               => $villa->id,
+                'name'             => $villa->name,
+                'ownership_status' => $villa->ownership_status,
+                'price_idr'        => $villa->price_idr,
+                'description'      => $villa->description,
+                'created_at'       => $villa->created_at->format('Y-m-d H:i:s'),
+                'updated_at'       => $villa->updated_at->format('Y-m-d H:i:s'),
+                'images'           => $villa->media->map(fn($media) => asset('storage/' . $media->file_path)),
             ],
         ]);
     }

@@ -55,7 +55,7 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->revoke(); // Hapus token yang sedang digunakan
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logout berhasil!']);
     }

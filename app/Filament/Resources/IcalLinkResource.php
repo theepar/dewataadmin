@@ -1,42 +1,40 @@
 <?php
-
 namespace App\Filament\Resources;
 
 // --- NAMESPACE DASAR FILAMENT ---
 use App\Filament\Resources\IcalLinkResource\Pages;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables\Table;
+use App\Models\IcalEvent;
+use App\Models\IcalLink;
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select; // Pastikan ini ada
-use Filament\Forms\Components\Hidden; // Ini akan tetap dipakai jika perlu field tersembunyi lain
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput; // Pastikan ini ada
+use Filament\Forms\Form;                 // Ini akan tetap dipakai jika perlu field tersembunyi lain
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT TABLES ---
-use Filament\Tables\Columns\TextColumn;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
-use App\Models\IcalEvent;
-use Illuminate\Support\Carbon;
-use Filament\Notifications\Notification;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 // --- IMPORTS UNTUK ELOQUENT & LAINNYA ---
-use App\Models\IcalLink;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth; // Untuk Auth::user()
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+
+// Untuk Auth::user()
 
 class IcalLinkResource extends Resource
 {
     protected static ?string $model = IcalLink::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-link';
+    protected static ?string $navigationIcon  = 'heroicon-o-link';
     protected static ?string $navigationGroup = 'Manajemen iCal';
 
-    public static function canAccess(): bool
+    public static function canViewAny(): bool
     {
-        return Auth::user()->hasRole('admin'); // Hanya admin yang bisa akses
+        return auth()->user()?->hasRole('admin');
     }
 
     public static function form(Form $form): Form
@@ -67,17 +65,17 @@ class IcalLinkResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // --- PERBAIKAN: FIELD USER_ID AGAR TERLIHAT DAN BISA DIPILIH OLEH ADMIN ---
-                Select::make('user_id') // Menggunakan Select untuk menampilkan dan memilih user
-                    ->label('Dikelola Oleh User') // Label yang lebih jelas
+                                               // --- PERBAIKAN: FIELD USER_ID AGAR TERLIHAT DAN BISA DIPILIH OLEH ADMIN ---
+                Select::make('user_id')        // Menggunakan Select untuk menampilkan dan memilih user
+                    ->label('Dikelola Oleh User')  // Label yang lebih jelas
                     ->relationship('user', 'name') // Mengambil nama dari model User
-                    ->default(auth()->id()) // Default ke user yang sedang login
-                    ->searchable() // Bisa dicari
-                    ->preload() // Memuat semua opsi di awal
+                    ->default(auth()->id())        // Default ke user yang sedang login
+                    ->searchable()                 // Bisa dicari
+                    ->preload()                    // Memuat semua opsi di awal
                     ->required()
-                    // Hanya terlihat jika user yang sedang login adalah admin
-                    ->visible(fn (): bool => Auth::user()->hasRole('admin')),
-                // --- AKHIR PERBAIKAN USER_ID ---
+                // Hanya terlihat jika user yang sedang login adalah admin
+                    ->visible(fn(): bool => Auth::user()->hasRole('admin')),
+                                // --- AKHIR PERBAIKAN USER_ID ---
             ])->columns(2); // Mengatur layout form menjadi 2 kolom
     }
 
@@ -105,7 +103,7 @@ class IcalLinkResource extends Resource
                     ->label('URL iCal')
                     ->copyable()
                     ->limit(40)
-                    ->tooltip(fn (string $state): string => $state)
+                    ->tooltip(fn(string $state): string => $state)
                     ->toggleable(isToggledHiddenByDefault: true), // Sembunyikan default
             ])
             ->filters([
@@ -125,15 +123,15 @@ class IcalLinkResource extends Resource
                     ->requiresConfirmation()
                     ->action(function ($record, $livewire) {
                         $icalUrl = $record->ical_url;
-                        $ics = @file_get_contents($icalUrl);
-                        if (!$ics) {
+                        $ics     = @file_get_contents($icalUrl);
+                        if (! $ics) {
                             Notification::make()
                                 ->title('Gagal mengambil data dari URL')
                                 ->danger()
                                 ->send();
                             return;
                         }
-                        if (!class_exists('om\\IcalParser')) {
+                        if (! class_exists('om\\IcalParser')) {
                             Notification::make()
                                 ->title('Pustaka icalparser belum terpasang')
                                 ->danger()
@@ -142,19 +140,19 @@ class IcalLinkResource extends Resource
                         }
                         $parser = new \om\IcalParser();
                         $parser->parseString($ics);
-                        $events = $parser->getEvents();
-                        $updated = 0;
+                        $events   = $parser->getEvents();
+                        $updated  = 0;
                         $inserted = 0;
                         foreach ($events as $ev) {
-                            $uid = $ev['UID'] ?? null;
-                            $summary = $ev['SUMMARY'] ?? null;
-                            $description = $ev['DESCRIPTION'] ?? null;
-                            $start = isset($ev['DTSTART']) ? Carbon::parse($ev['DTSTART']) : null;
-                            $end = isset($ev['DTEND']) ? Carbon::parse($ev['DTEND']) : null;
-                            $status = $ev['STATUS'] ?? null;
+                            $uid          = $ev['UID'] ?? null;
+                            $summary      = $ev['SUMMARY'] ?? null;
+                            $description  = $ev['DESCRIPTION'] ?? null;
+                            $start        = isset($ev['DTSTART']) ? Carbon::parse($ev['DTSTART']) : null;
+                            $end          = isset($ev['DTEND']) ? Carbon::parse($ev['DTEND']) : null;
+                            $status       = $ev['STATUS'] ?? null;
                             $propertyName = $ev['LOCATION'] ?? null;
-                            $guestName = $reservationId = $guestCount = null;
-                            if (!empty($description)) {
+                            $guestName    = $reservationId    = $guestCount    = null;
+                            if (! empty($description)) {
                                 if (preg_match('/Guest:\\s*(.+)/i', $description, $m)) {
                                     $guestName = trim($m[1]);
                                 }
@@ -170,22 +168,22 @@ class IcalLinkResource extends Resource
                                 $durasi = $start->diffInDays($end);
                             }
                             $isCancelled = ($status && strtolower($status) === 'cancelled');
-                            $where = [
+                            $where       = [
                                 'ical_link_id' => $record->id,
-                                'uid' => $uid,
+                                'uid'          => $uid,
                             ];
                             $data = [
-                                'summary' => $summary,
-                                'description' => $description,
-                                'start_date' => $start,
-                                'end_date' => $end,
-                                'status' => $status,
-                                'guest_name' => $guestName,
+                                'summary'        => $summary,
+                                'description'    => $description,
+                                'start_date'     => $start,
+                                'end_date'       => $end,
+                                'status'         => $status,
+                                'guest_name'     => $guestName,
                                 'reservation_id' => $reservationId,
-                                'property_name' => $propertyName,
-                                'jumlah_orang' => $guestCount,
-                                'durasi' => $durasi,
-                                'is_cancelled' => $isCancelled,
+                                'property_name'  => $propertyName,
+                                'jumlah_orang'   => $guestCount,
+                                'durasi'         => $durasi,
+                                'is_cancelled'   => $isCancelled,
                             ];
                             $existing = IcalEvent::where($where)->first();
                             if ($existing) {
@@ -220,7 +218,7 @@ class IcalLinkResource extends Resource
                     ->modalButton('Tutup')
                     ->modalContent(function ($record) {
                         $icalUrl = $record->ical_url;
-                        $events = [];
+                        $events  = [];
                         try {
                             $ics = @file_get_contents($icalUrl);
                             if ($ics) {
@@ -239,7 +237,7 @@ class IcalLinkResource extends Resource
                         }
                         return view('filament.modals.ical-preview', [
                             'icalUrl' => $icalUrl,
-                            'events' => $events,
+                            'events'  => $events,
                         ]);
                     }),
             ])
@@ -260,9 +258,14 @@ class IcalLinkResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListIcalLinks::route('/'),
+            'index'  => Pages\ListIcalLinks::route('/'),
             'create' => Pages\CreateIcalLink::route('/create'),
-            'edit' => Pages\EditIcalLink::route('/{record}/edit'),
+            'edit'   => Pages\EditIcalLink::route('/{record}/edit'),
         ];
+    }
+
+    public static function isGloballySearchable(): bool
+    {
+        return false;
     }
 }

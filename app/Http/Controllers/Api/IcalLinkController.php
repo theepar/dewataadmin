@@ -1,12 +1,10 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\IcalLink;
+use App\Models\Villa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class IcalLinkController extends Controller
 {
@@ -20,37 +18,29 @@ class IcalLinkController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         if ($user->hasRole('admin')) {
-            // Admin melihat semua iCal links
-            $icalLinks = IcalLink::with('user', 'villa')->get();
+            $villas = Villa::with('media')->get();
         } else {
-            // Pegawai hanya melihat iCal links yang terkait dengan villa yang mereka kelola
-            $managedVillaIds = $user->villas->pluck('id');
-            $icalLinks = IcalLink::whereIn('villa_id', $managedVillaIds)
-                                 ->with('user', 'villa')
-                                 ->get();
+            // Pegawai hanya melihat villa yang dia kelola
+            $villas = $user->villas()->with('media')->get();
         }
 
         return response()->json([
-            'message' => 'iCal links retrieved successfully',
-            'data' => $icalLinks->map(function($link) {
+            'message' => 'Villas retrieved successfully',
+            'data'    => $villas->map(function ($villa) {
                 return [
-                    'id' => $link->id,
-                    'name' => $link->name,
-                    'ical_url' => $link->ical_url,
-                    'last_synced_at' => $link->last_synced_at ? $link->last_synced_at->format('Y-m-d H:i:s') : null,
-                    'created_by_user' => [
-                        'id' => $link->user->id ?? null,
-                        'name' => $link->user->name ?? null,
-                    ],
-                    'related_villa' => [
-                        'id' => $link->villa->id ?? null,
-                        'name' => $link->villa->name ?? null,
-                    ],
+                    'id'               => $villa->id,
+                    'name'             => $villa->name,
+                    'ownership_status' => $villa->ownership_status,
+                    'price_idr'        => $villa->price_idr,
+                    'description'      => $villa->description,
+                    'created_at'       => $villa->created_at->format('Y-m-d H:i:s'),
+                    'updated_at'       => $villa->updated_at->format('Y-m-d H:i:s'),
+                    'images'           => $villa->media->map(fn($media) => asset('storage/' . $media->file_path)),
                 ];
             }),
         ]);
@@ -66,38 +56,41 @@ class IcalLinkController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $icalLink = IcalLink::with('user', 'villa')->find($id);
+        $icalLink = \App\Models\IcalLink::with(['user', 'villa.media'])->find($id);
 
-        if (!$icalLink) {
+        if (! $icalLink) {
             return response()->json(['message' => 'iCal Link not found'], 404);
         }
 
         // Otorisasi: Pegawai hanya bisa melihat link yang terkait dengan villa yang mereka kelola
         if ($user->hasRole('pegawai')) {
             $managedVillaIds = $user->villas->pluck('id');
-            if (!in_array($icalLink->villa_id, $managedVillaIds->toArray())) {
+            if (! in_array($icalLink->villa_id, $managedVillaIds->toArray())) {
                 return response()->json(['message' => 'Forbidden: You do not manage this villa.'], 403);
             }
         }
 
         return response()->json([
             'message' => 'iCal link retrieved successfully',
-            'data' => [
-                'id' => $icalLink->id,
-                'name' => $icalLink->name,
-                'ical_url' => $icalLink->ical_url,
-                'last_synced_at' => $icalLink->last_synced_at ? $icalLink->last_synced_at->format('Y-m-d H:i:s') : null,
+            'data'    => [
+                'id'              => $icalLink->id,
+                'name'            => $icalLink->name,
+                'ical_url'        => $icalLink->ical_url,
+                'last_synced_at'  => $icalLink->last_synced_at ? $icalLink->last_synced_at->format('Y-m-d H:i:s') : null,
                 'created_by_user' => [
-                    'id' => $icalLink->user->id ?? null,
+                    'id'   => $icalLink->user->id ?? null,
                     'name' => $icalLink->user->name ?? null,
                 ],
-                'related_villa' => [
-                    'id' => $icalLink->villa->id ?? null,
-                    'name' => $icalLink->villa->name ?? null,
+                'related_villa'   => [
+                    'id'     => $icalLink->villa->id ?? null,
+                    'name'   => $icalLink->villa->name ?? null,
+                    'images' => $icalLink->villa && $icalLink->villa->media
+                    ? $icalLink->villa->media->map(fn($media) => asset('storage/' . $media->file_path))
+                    : [],
                 ],
             ],
         ]);

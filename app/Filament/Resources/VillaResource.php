@@ -33,9 +33,9 @@ class VillaResource extends Resource
     protected static ?string $navigationIcon  = 'heroicon-o-home';
     protected static ?string $navigationGroup = 'Properti';
 
-    public static function canAccess(): bool
+    public static function canViewAny(): bool
     {
-        return Auth::user()->hasRole('admin');
+        return auth()->user()?->hasRole('admin');
     }
 
     public static function form(Form $form): Form
@@ -234,5 +234,10 @@ class VillaResource extends Resource
             'create' => Pages\CreateVilla::route('/create'),
             'edit'   => Pages\EditVilla::route('/{record}/edit'),
         ];
+    }
+
+    public static function isGloballySearchable(): bool
+    {
+        return false;
     }
 }
