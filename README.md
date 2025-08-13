@@ -11,6 +11,8 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
   - Info kamar: jumlah bedroom, bed, bathroom.
   - Fasilitas (amenities): input/edit dinamis via repeater, tersimpan dalam format JSON.
   - Relasi villa dengan media (gambar/video) dan pegawai (setiap villa hanya bisa dikelola satu pegawai, admin bisa akses semua).
+  - **Manajemen Unit Villa:** Input jumlah unit villa langsung dari form, otomatis membuat/menghapus data unit di tabel `villa_units` sesuai input. Setiap unit villa dapat memiliki link iCal sendiri.
+  - **Sinkronisasi jumlah unit:** Edit jumlah unit di villa resource akan otomatis menambah/menghapus unit di tabel `villa_units`.
 - **Manajemen User & Role**
   - Otentikasi dan otorisasi berbasis peran (admin, pegawai) menggunakan Spatie Permission.
   - Pegawai hanya bisa melihat dan mengelola villa miliknya sendiri.
@@ -20,17 +22,20 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
   - Event booking disimpan di tabel `ical_events`.
   - Sinkronisasi otomatis setiap 20 menit via Laravel Scheduler.
   - Hanya update jika ada perubahan event booking.
+  - **Manajemen iCal per unit:** Setiap unit villa dapat memiliki link iCal berbeda, sehingga sinkronisasi event lebih detail per unit.
 - **Manajemen Media**
   - Upload dan pengelolaan gambar/video villa dengan Spatie Media Library.
   - Gambar villa tersimpan di tabel `villa_media` dan relasi ke villa.
 - **Admin Panel Filament**
   - Dashboard modern untuk mengelola semua data, akses dibatasi sesuai peran.
   - Input/edit amenities dan info kamar langsung di form.
+  - Input jumlah unit villa langsung di form, otomatis sinkron ke tabel unit.
   - Generate dan kelola API key website untuk akses data villa dari frontend.
 - **API untuk Mobile & Website**
   - Endpoint JSON untuk aplikasi mobile (autentikasi dengan Laravel Sanctum).
   - Endpoint khusus website dengan API key (header `Admin`), bisa akses semua villa.
   - Data villa, event, dan link iCal bisa diakses sesuai role dan API key.
+  - **Endpoint unit villa:** Data unit villa dan link iCal per unit tersedia di API.
 - **Notifikasi**
   - Integrasi dengan Firebase Cloud Messaging untuk push notifikasi ke aplikasi mobile.
 - **History Login**
@@ -46,9 +51,10 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 
 - **users**: Data user, role, otentikasi.
 - **villas**: Data villa (nama, harga, deskripsi, status, info kamar, amenities).
+- **villa_units**: Data unit per villa (relasi ke villa, nomor unit, link iCal per unit).
 - **villa_media**: Gambar/video villa, relasi ke villa.
 - **villa_user**: Relasi villa dengan user (pegawai).
-- **ical_links**: Link iCal Airbnb, relasi ke villa dan user.
+- **ical_links**: Link iCal Airbnb, relasi ke unit villa.
 - **ical_events**: Event booking dari iCal (summary, tanggal, status, tamu, dll).
 - **login_histories**: History login user (user_id, IP, device, waktu login).
 - **website_api_keys**: API key untuk website frontend (website_name, api_key).
@@ -68,6 +74,8 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 |                    | GET `/api/ical-links/{id}`     | Get detail iCal link                           |
 | IcalEventController| GET `/api/ical-events`         | Get semua event booking                        |
 |                    | GET `/api/ical-events/{id}`    | Get detail event booking                       |
+| VillaUnitController| GET `/api/villa-units`         | Get semua unit villa dan link iCal per unit    |
+|                    | GET `/api/villa-units/{id}`    | Get detail unit villa                          |
 
 **Catatan:**  
 - Endpoint `/api/website/villas` hanya bisa diakses dengan header `Admin: <api_key>`.
@@ -108,8 +116,8 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 - Akses admin panel di `http://localhost:8000/admin`
 - Endpoint API tersedia di `http://localhost:8000/api`
 - Login dengan user yang sudah di-seed atau buat user baru melalui admin panel
-- Kelola villa, user, media, amenities, dan API key website dari dashboard Filament
-- Website frontend dapat mengambil data villa dengan API key yang digenerate admin
+- Kelola villa, unit villa, user, media, amenities, dan API key website dari dashboard Filament
+- Website frontend dapat mengambil data villa dan unit dengan API key yang digenerate admin
 
 ---
 

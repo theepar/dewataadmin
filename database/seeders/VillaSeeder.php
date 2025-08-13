@@ -2,6 +2,7 @@
 namespace Database\Seeders;
 
 use App\Models\Villa;
+use App\Models\VillaUnit;
 use Illuminate\Database\Seeder;
 
 class VillaSeeder extends Seeder
@@ -18,6 +19,91 @@ class VillaSeeder extends Seeder
                 'bedroom'          => 1,
                 'bed'              => 1,
                 'bathroom'         => 1,
+                'amenities'        => [
+                    // Bathroom
+                    ['name' => 'Bathroom', 'available' => true],
+                    ['name' => 'Bath', 'available' => true],
+                    ['name' => 'Hair dryer', 'available' => true],
+                    ['name' => 'Cleaning products', 'available' => true],
+                    ['name' => 'Shampoo', 'available' => true],
+                    ['name' => 'Conditioner', 'available' => true],
+                    ['name' => 'Bidet', 'available' => true],
+                    ['name' => 'Hot water', 'available' => true],
+                    ['name' => 'Shower gel', 'available' => true],
+
+                    // Bedroom and laundry
+                    ['name' => 'Washing machine', 'available' => true],
+                    ['name' => 'Dryer', 'available' => true],
+                    ['name' => 'Hangers', 'available' => true],
+                    ['name' => 'Bed linen', 'available' => true],
+                    ['name' => 'Room-darkening blinds', 'available' => true],
+                    ['name' => 'Clothes drying rack', 'available' => true],
+                    ['name' => 'Clothes storage', 'available' => true],
+
+                    // Entertainment
+                    ['name' => 'TV', 'available' => true],
+
+                    // Heating and cooling
+                    ['name' => 'Air conditioning', 'available' => true],
+
+                    // Home safety
+                    ['name' => 'First aid kit', 'available' => true],
+
+                    // Internet and office
+                    ['name' => 'Wifi', 'available' => true],
+                    ['name' => 'Dedicated workspace', 'available' => true],
+
+                    // Kitchen and dining
+                    ['name' => 'Kitchen', 'available' => true],
+                    ['name' => 'Space where guests can cook their own meals', 'available' => true],
+                    ['name' => 'Fridge', 'available' => true],
+                    ['name' => 'Microwave', 'available' => true],
+                    ['name' => 'Cooking basics', 'available' => true],
+                    ['name' => 'Pots and pans, oil, salt and pepper', 'available' => true],
+                    ['name' => 'Dishes and cutlery', 'available' => true],
+                    ['name' => 'Bowls, chopsticks, plates, cups, etc.', 'available' => true],
+                    ['name' => 'Freezer', 'available' => true],
+                    ['name' => 'Cooker', 'available' => true],
+                    ['name' => 'Oven', 'available' => true],
+                    ['name' => 'Kettle', 'available' => true],
+                    ['name' => 'Wine glasses', 'available' => true],
+                    ['name' => 'Blender', 'available' => true],
+                    ['name' => 'Dining table', 'available' => true],
+
+                    // Location features
+                    ['name' => 'Private entrance', 'available' => true],
+                    ['name' => 'Separate street or building entrance', 'available' => true],
+
+                    // Outdoor
+                    ['name' => 'Patio or balcony', 'available' => true],
+                    ['name' => 'Garden', 'available' => true],
+                    ['name' => 'An open space on the property usually covered in grass', 'available' => true],
+                    ['name' => 'Outdoor furniture', 'available' => true],
+                    ['name' => 'Outdoor dining area', 'available' => true],
+                    ['name' => 'Sun loungers', 'available' => true],
+
+                    // Parking and facilities
+                    ['name' => 'Free parking on premises', 'available' => true],
+                    ['name' => 'Free on-street parking', 'available' => true],
+                    ['name' => 'Pool', 'available' => true],
+                    ['name' => 'Hot tub', 'available' => true],
+
+                    // Services
+                    ['name' => 'Long-term stays allowed', 'available' => true],
+                    ['name' => 'Allow stays of 28 days or more', 'available' => true],
+                    ['name' => 'Self check-in', 'available' => true],
+                    ['name' => 'Keypad', 'available' => true],
+                    ['name' => 'Check yourself in to the home with a door code', 'available' => true],
+                    ['name' => 'Cleaning available during stay', 'available' => true],
+
+                    // Not included
+                    ['name' => 'Exterior security cameras on property', 'available' => false],
+                    ['name' => 'Essentials', 'available' => false],
+                    ['name' => 'Smoke alarm', 'available' => false],
+                    ['name' => 'Carbon monoxide alarm', 'available' => false],
+                    ['name' => 'Heating', 'available' => false],
+                ],
+                'unit_count'       => 1, // Tambahkan jumlah unit di sini
                 'created_at'       => now(),
                 'updated_at'       => now(),
             ],
@@ -105,6 +191,7 @@ class VillaSeeder extends Seeder
                     ['name' => 'Carbon monoxide alarm', 'available' => false],
                     ['name' => 'Heating', 'available' => false],
                 ],
+                'unit_count'       => 5,
                 'created_at'       => now(),
                 'updated_at'       => now(),
             ],
@@ -184,13 +271,25 @@ class VillaSeeder extends Seeder
                     ['name' => 'Carbon monoxide alarm', 'available' => false],
                     ['name' => 'Heating', 'available' => false],
                 ],
+                'unit_count'       => 3,
                 'created_at'       => now(),
                 'updated_at'       => now(),
             ],
         ];
 
         foreach ($villas as $villa) {
-            Villa::create($villa);
+            $unitCount = $villa['unit_count'];
+            unset($villa['unit_count']);
+            $createdVilla = Villa::create($villa);
+
+            // Buat unit sesuai jumlah yang diinginkan
+            for ($i = 1; $i <= $unitCount; $i++) {
+                VillaUnit::create([
+                    'villa_id'    => $createdVilla->id,
+                    'unit_number' => (string) $i,
+                    'ical_link'   => null,
+                ]);
+            }
         }
     }
 }

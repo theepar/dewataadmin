@@ -1,11 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\IcalLinkController;
+use App\Http\Controllers\Api\VillaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\VillaController; // Impor VillaController
-use App\Http\Controllers\Api\IcalLinkController; // Impor IcalLinkController
-use App\Http\Controllers\Api\IcalEventController; // Impor IcalEventController
 
 /*
 |--------------------------------------------------------------------------
@@ -18,29 +17,30 @@ use App\Http\Controllers\Api\IcalEventController; // Impor IcalEventController
 |
 */
 
-// --- Rute Publik (Tidak memerlukan autentikasi) ---
+// --- Public Routes ---
 Route::post('/login', [AuthController::class, 'login']);
-// Route::post('/register', [AuthController::class, 'register']); // Aktifkan jika Anda punya method register di AuthController
 
-// --- Rute yang Memerlukan Autentikasi API (melalui Sanctum) ---
+// --- Website API Routes ---
+Route::prefix('web')->middleware('website.api')->group(function () {
+    Route::get('/villas', [VillaController::class, 'index']);
+    Route::get('/villas/{id}', [VillaController::class, 'show']);
+});
+
+// --- Protected Routes (Require Sanctum Authentication) ---
 Route::middleware('auth:sanctum')->group(function () {
-    // Endpoint untuk mendapatkan informasi user yang sedang login
+    // Get current authenticated user
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // Endpoint untuk logout
+    // Logout endpoint
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // --- Endpoint untuk Villas ---
+    // Villas endpoints
     Route::get('/villas', [VillaController::class, 'index']);
     Route::get('/villas/{id}', [VillaController::class, 'show']);
 
-    // --- Endpoint untuk Ical Links ---
+    // Ical Links endpoints
     Route::get('/ical-links', [IcalLinkController::class, 'index']);
     Route::get('/ical-links/{id}', [IcalLinkController::class, 'show']);
-
-    // --- Endpoint untuk Ical Events ---
-    Route::get('/ical-events', [IcalEventController::class, 'index']);
-    Route::get('/ical-events/{id}', [IcalEventController::class, 'show']);
 });

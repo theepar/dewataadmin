@@ -10,9 +10,6 @@ class VillaController extends Controller
 {
     /**
      * Get all villas (filtered by user access).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
     {
@@ -23,10 +20,9 @@ class VillaController extends Controller
         }
 
         if ($user->hasRole('admin')) {
-            $villas = Villa::with('media')->get();
+            $villas = Villa::with(['media', 'villaUnits'])->get();
         } else {
-            // Ambil villa yang user kelola (hanya satu villa)
-            $villas = $user->villas()->with('media')->get();
+            $villas = $user->villas()->with(['media', 'villaUnits'])->get();
         }
 
         return response()->json([
@@ -40,8 +36,14 @@ class VillaController extends Controller
                     'description'      => $villa->description,
                     'created_at'       => $villa->created_at->format('Y-m-d H:i:s'),
                     'updated_at'       => $villa->updated_at->format('Y-m-d H:i:s'),
-                    'images'           => $villa->media->map(function ($media) {
-                        return asset('storage/' . $media->file_path);
+                    'images'           => $villa->media->map(fn($media) => asset('villa-images/' . $media->file_name)),
+                    'units'            => $villa->villaUnits->map(function ($unit) {
+                        return [
+                            'id'          => $unit->id,
+                            'name'        => $unit->name,
+                            'description' => $unit->description,
+                            'price_idr'   => $unit->price_idr,
+                        ];
                     }),
                 ];
             }),
@@ -50,9 +52,6 @@ class VillaController extends Controller
 
     /**
      * Get a single villa by ID.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
@@ -62,14 +61,13 @@ class VillaController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $villa = Villa::with('media')->find($id);
+        $villa = Villa::with(['media', 'villaUnits'])->find($id);
 
         if (! $villa) {
             return response()->json(['message' => 'Villa not found'], 404);
         }
 
         if ($user->hasRole('pegawai')) {
-            // Pegawai hanya bisa lihat villa yang dia kelola (hanya satu villa)
             if (! $user->villas->pluck('id')->contains($villa->id)) {
                 return response()->json(['message' => 'Forbidden: You do not manage this villa.'], 403);
             }
@@ -85,8 +83,14 @@ class VillaController extends Controller
                 'description'      => $villa->description,
                 'created_at'       => $villa->created_at->format('Y-m-d H:i:s'),
                 'updated_at'       => $villa->updated_at->format('Y-m-d H:i:s'),
-                'images'           => $villa->media->map(function ($media) {
-                    return asset('storage/' . $media->file_path);
+                'images'           => $villa->media->map(fn($media) => asset('villa-images/' . $media->file_name)),
+                'units'            => $villa->villaUnits->map(function ($unit) {
+                    return [
+                        'id'          => $unit->id,
+                        'name'        => $unit->name,
+                        'description' => $unit->description,
+                        'price_idr'   => $unit->price_idr,
+                    ];
                 }),
             ],
         ]);
@@ -94,13 +98,10 @@ class VillaController extends Controller
 
     /**
      * Get all villas for the website.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function websiteIndex(Request $request)
     {
-        $villas = Villa::with('media')->get();
+        $villas = Villa::with(['media', 'villaUnits'])->get();
 
         return response()->json([
             'message' => 'Villas retrieved successfully',
@@ -113,7 +114,15 @@ class VillaController extends Controller
                     'description'      => $villa->description,
                     'created_at'       => $villa->created_at->format('Y-m-d H:i:s'),
                     'updated_at'       => $villa->updated_at->format('Y-m-d H:i:s'),
-                    'images'           => $villa->media->map(fn($media) => asset('storage/' . $media->file_path)),
+                    'images'           => $villa->media->map(fn($media) => asset('villa-images/' . $media->file_name)),
+                    'units'            => $villa->villaUnits->map(function ($unit) {
+                        return [
+                            'id'          => $unit->id,
+                            'name'        => $unit->name,
+                            'description' => $unit->description,
+                            'price_idr'   => $unit->price_idr,
+                        ];
+                    }),
                 ];
             }),
         ]);

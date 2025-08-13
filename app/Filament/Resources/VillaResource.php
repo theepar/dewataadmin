@@ -100,6 +100,14 @@ class VillaResource extends Resource
                             ->default(1)
                             ->required(),
 
+                        TextInput::make('unit_count')
+                            ->label('Jumlah Unit')
+                            ->numeric()
+                            ->minValue(1)
+                            ->required()
+                            ->dehydrated(false)
+                            ->formatStateUsing(fn($state, $record) => $record ? $record->units()->count() : 1),
+
                         Select::make('users')
                             ->label('Pegawai yang bisa melihat villa ini')
                             ->multiple(false)
@@ -168,6 +176,10 @@ class VillaResource extends Resource
                 TextColumn::make('price_idr')
                     ->label('Harga (IDR)')
                     ->money('idr')
+                    ->sortable(),
+                TextColumn::make('units_count')
+                    ->label('Jumlah Unit')
+                    ->getStateUsing(fn($record) => $record->units()->count())
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Dibuat Pada')

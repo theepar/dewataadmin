@@ -12,9 +12,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class LoginHistoryResource extends Resource
 {
-    protected static ?string $model = LoginHistory::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $model           = LoginHistory::class;
+    protected static ?string $navigationIcon  = 'heroicon-o-arrow-right-on-rectangle';
+    protected static ?string $navigationGroup = 'Account';
 
     public static function form(Form $form): Form
     {

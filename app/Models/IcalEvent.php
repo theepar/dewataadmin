@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,13 +26,23 @@ class IcalEvent extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
+        'start_date'   => 'datetime',
+        'end_date'     => 'datetime',
         'is_cancelled' => 'boolean',
     ];
 
-    public function icalLink(): BelongsTo
+    public function villa()
     {
-        return $this->belongsTo(IcalLink::class);
+        return $this->belongsTo(\App\Models\Villa::class, 'villa_id');
+    }
+
+    public function villaUnit()
+    {
+        return $this->belongsTo(\App\Models\VillaUnit::class, 'villa_unit_id');
+    }
+
+    public function icalLink()
+    {
+        return $this->belongsTo(\App\Models\IcalLink::class, 'ical_link_id');
     }
 }

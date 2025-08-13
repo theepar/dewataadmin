@@ -34,4 +34,8 @@ class Villa extends Model
     {
         return $this->belongsToMany(User::class, 'villa_user');
     }
+    public function units()
+    {
+        return $this->hasMany(\App\Models\VillaUnit::class);
+    }
 }

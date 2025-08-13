@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Resources\IcalLinkResource\Pages;
 
 use App\Filament\Resources\IcalLinkResource;
@@ -15,5 +14,9 @@ class EditIcalLink extends EditRecord
         return [
             Actions\DeleteAction::make(),
         ];
+    }
+
+    protected function afterSave(): void
+    {
     }
 }

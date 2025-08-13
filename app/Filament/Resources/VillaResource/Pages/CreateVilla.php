@@ -64,4 +64,27 @@ class CreateVilla extends CreateRecord
 
         return $villa;
     }
+
+    protected function afterCreate(): void
+    {
+        $villa     = $this->record;
+        $unitCount = $this->form->getRawState()['unit_count'] ?? 1;
+
+        $currentCount = $villa->units()->count();
+
+        if ($unitCount > $currentCount) {
+            for ($i = $currentCount + 1; $i <= $unitCount; $i++) {
+                \App\Models\VillaUnit::create([
+                    'villa_id'    => $villa->id,
+                    'unit_number' => (string) $i,
+                    'ical_link'   => null,
+                ]);
+            }
+        } elseif ($unitCount < $currentCount) {
+            $unitsToDelete = $villa->units()->orderByDesc('unit_number')->take($currentCount - $unitCount)->get();
+            foreach ($unitsToDelete as $unit) {
+                $unit->delete();
+            }
+        }
+    }
 }

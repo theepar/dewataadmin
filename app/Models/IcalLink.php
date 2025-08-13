@@ -11,8 +11,6 @@ class IcalLink extends Model
 
     protected $fillable = [
         'villa_id',
-        'user_id',
-        'name',
         'ical_url',
         'last_synced_at',
     ];
@@ -25,5 +23,10 @@ class IcalLink extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function villaUnit()
+    {
+        return $this->belongsTo(\App\Models\VillaUnit::class, 'villa_unit_id');
     }
 }

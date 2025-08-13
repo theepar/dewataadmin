@@ -4,25 +4,21 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash; // Pastikan model User Anda diimpor
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-
-// Untuk penanganan error validasi
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
     /**
      * Handle user login and issue Sanctum token.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function login(Request $request)
     {
         $request->validate([
             'email'       => 'required|email',
             'password'    => 'required',
-            'device_name' => 'required', // Nama perangkat dari aplikasi mobile
+            'device_name' => 'required',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -33,7 +29,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Hapus token lama jika ada (opsional, tergantung kebijakan Anda)
+        // Hapus token lama untuk device yang sama
         $user->tokens()->where('name', $request->device_name)->delete();
 
         // Buat token baru
@@ -41,17 +37,14 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil!',
-            'user'    => $user->only('id', 'name', 'email'), // Kirim data user yang relevan
+            'user'    => $user->only(['id', 'name', 'email']),
             'token'   => $token,
-            'roles'   => $user->getRoleNames(), // Kirim peran user
+            'roles'   => $user->getRoleNames(),
         ]);
     }
 
     /**
      * Handle user logout (revoke current token).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
     public function logout(Request $request)
     {
@@ -60,14 +53,16 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logout berhasil!']);
     }
 
-    // Anda bisa tambahkan method register() jika aplikasi mobile bisa mendaftar user baru
-
+    /**
+     * Handle user registration.
+     */
     public function register(Request $request)
     {
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'device_name' => 'required',
         ]);
 
         $user = User::create([
@@ -76,17 +71,17 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Otomatis berikan peran 'pegawai' untuk user baru yang mendaftar via API
-        $pegawaiRole = \Spatie\Permission\Models\Role::where('name', 'pegawai')->first();
+        // Assign default role 'pegawai'
+        $pegawaiRole = Role::where('name', 'pegawai')->first();
         if ($pegawaiRole) {
             $user->assignRole($pegawaiRole);
         }
 
-        $token = $user->createToken($request->device_name ?? 'mobile-device')->plainTextToken;
+        $token = $user->createToken($request->device_name)->plainTextToken;
 
         return response()->json([
             'message' => 'Registrasi berhasil!',
-            'user'    => $user->only('id', 'name', 'email'),
+            'user'    => $user->only(['id', 'name', 'email']),
             'token'   => $token,
             'roles'   => $user->getRoleNames(),
         ], 201);

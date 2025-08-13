@@ -1,36 +1,26 @@
 <?php
 namespace App\Filament\Resources;
 
-// --- NAMESPACE DASAR FILAMENT ---
 use App\Filament\Resources\IcalLinkResource\Pages;
 use App\Models\IcalEvent;
 use App\Models\IcalLink;
-
-// --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
+use App\Models\VillaUnit;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput; // Pastikan ini ada
-use Filament\Forms\Form;                 // Ini akan tetap dipakai jika perlu field tersembunyi lain
-
-// --- IMPORTS UNTUK KOMPONEN FILAMENT TABLES ---
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-
-// --- IMPORTS UNTUK ELOQUENT & LAINNYA ---
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
-
-// Untuk Auth::user()
 
 class IcalLinkResource extends Resource
 {
-    protected static ?string $model = IcalLink::class;
-
+    protected static ?string $model           = IcalLink::class;
     protected static ?string $navigationIcon  = 'heroicon-o-link';
-    protected static ?string $navigationGroup = 'Manajemen iCal';
+    protected static ?string $navigationGroup = 'Manajemen Url';
 
     public static function canViewAny(): bool
     {
@@ -41,78 +31,48 @@ class IcalLinkResource extends Resource
     {
         return $form
             ->schema([
-                // Field untuk memilih Villa terkait
                 Select::make('villa_id')
                     ->label('Villa Terkait')
-                    ->relationship('villa', 'name') // Mengambil nama dari model Villa
+                    ->relationship('villa', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
                     ->columnSpan(1),
 
-                // Field Nama/Deskripsi Link
-                TextInput::make('name')
-                    ->label('Nama/Deskripsi Link')
+                Select::make('villa_unit_id')
+                    ->label('Unit Villa')
+                    ->options(function ($get) {
+                        $villaId = $get('villa_id');
+                        return $villaId
+                        ? VillaUnit::where('villa_id', $villaId)->pluck('unit_number', 'id')
+                        : [];
+                    })
+                    ->searchable()
                     ->required()
-                    ->maxLength(255)
-                    ->columnSpan(1),
+                    ->reactive(),
 
-                // Field URL iCal dari Airbnb
                 TextInput::make('ical_url')
                     ->label('URL iCal dari Airbnb')
                     ->url()
                     ->required()
                     ->maxLength(255)
                     ->columnSpanFull(),
-
-                                               // --- PERBAIKAN: FIELD USER_ID AGAR TERLIHAT DAN BISA DIPILIH OLEH ADMIN ---
-                Select::make('user_id')        // Menggunakan Select untuk menampilkan dan memilih user
-                    ->label('Dikelola Oleh User')  // Label yang lebih jelas
-                    ->relationship('user', 'name') // Mengambil nama dari model User
-                    ->default(auth()->id())        // Default ke user yang sedang login
-                    ->searchable()                 // Bisa dicari
-                    ->preload()                    // Memuat semua opsi di awal
-                    ->required()
-                // Hanya terlihat jika user yang sedang login adalah admin
-                    ->visible(fn(): bool => Auth::user()->hasRole('admin')),
-                                // --- AKHIR PERBAIKAN USER_ID ---
-            ])->columns(2); // Mengatur layout form menjadi 2 kolom
+            ])->columns(2);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('villa.name')
-                    ->label('Villa')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('name')
-                    ->label('Nama Link')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('user.name')
-                    ->label('Dibuat Oleh')
-                    ->sortable(),
-                TextColumn::make('last_synced_at')
-                    ->label('Terakhir Sinkron')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('ical_url')
-                    ->label('URL iCal')
-                    ->copyable()
-                    ->limit(40)
-                    ->tooltip(fn(string $state): string => $state)
-                    ->toggleable(isToggledHiddenByDefault: true), // Sembunyikan default
+                TextColumn::make('villa.name')->label('Villa')->searchable()->sortable(),
+                TextColumn::make('villaUnit.unit_number')->label('Unit')->sortable(),
+                TextColumn::make('last_synced_at')->label('Terakhir Sinkron')->dateTime()->sortable(),
+                TextColumn::make('ical_url')->label('URL iCal')->copyable()->limit(40)->tooltip(fn(string $state): string => $state),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('villa')
                     ->relationship('villa', 'name')
                     ->label('Filter Berdasarkan Villa'),
-                Tables\Filters\SelectFilter::make('user')
-                    ->relationship('user', 'name')
-                    ->label('Filter Berdasarkan User'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -184,6 +144,8 @@ class IcalLinkResource extends Resource
                                 'jumlah_orang'   => $guestCount,
                                 'durasi'         => $durasi,
                                 'is_cancelled'   => $isCancelled,
+                                'villa_id'       => $record->villa_id,
+                                'villa_unit_id'  => $record->villa_unit_id,
                             ];
                             $existing = IcalEvent::where($where)->first();
                             if ($existing) {
@@ -199,7 +161,10 @@ class IcalLinkResource extends Resource
                                     $updated++;
                                 }
                             } else {
-                                IcalEvent::create(array_merge($where, $data));
+                                IcalEvent::create(array_merge($where, [
+                                    'villa_id'      => $record->villa_id,
+                                    'villa_unit_id' => $record->villa_unit_id,
+                                ] + $data));
                                 $inserted++;
                             }
                         }
@@ -250,9 +215,7 @@ class IcalLinkResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

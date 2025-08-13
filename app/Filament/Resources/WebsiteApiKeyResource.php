@@ -11,8 +11,9 @@ use Filament\Tables\Table;
 
 class WebsiteApiKeyResource extends Resource
 {
-    protected static ?string $model          = WebsiteApiKey::class;
-    protected static ?string $navigationIcon = 'heroicon-o-key';
+    protected static ?string $model           = WebsiteApiKey::class;
+    protected static ?string $navigationIcon  = 'heroicon-o-key';
+    protected static ?string $navigationGroup = 'Manajemen Url';
 
     public static function canViewAny(): bool
     {
