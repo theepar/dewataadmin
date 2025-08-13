@@ -117,6 +117,7 @@ class VillaResource extends Resource
                             ->maxFiles(20)
                             ->image()
                             ->directory('villa-images')
+                            ->disk('public')
                             ->preserveFilenames()
                             ->helperText('Drag & drop hingga 20 gambar tambahan.')
                             ->default(fn($record) =>
@@ -194,7 +195,6 @@ class VillaResource extends Resource
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(fn($record) => view('filament.modals.villa-preview', [
                         'villa'    => $record,
-                        // Tambahkan ini jika ownership_status perlu dipecah untuk badge di blade:
                         'statuses' => is_array($record->ownership_status)
                         ? $record->ownership_status
                         : (is_string($record->ownership_status) && ! empty($record->ownership_status)

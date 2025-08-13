@@ -114,7 +114,7 @@
     {{-- Foto cover (foto pertama) --}}
     @if ($cover)
         <div class="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-800">
-            <img src="{{ asset('storage/' . $cover->file_path) }}" alt="Cover Villa: {{ $cover->file_name }}"
+            <img src="{{ asset($cover->file_path) }}" alt="Cover Villa: {{ $cover->file_name }}"
                 class="h-full w-full object-cover transition-transform duration-300 hover:scale-105">
             <span class="absolute left-2 top-2 z-10 rounded bg-blue-600 px-2 py-1 text-xs font-bold text-white shadow">
                 Cover Foto
@@ -125,7 +125,7 @@
     {{-- Foto lainnya --}}
     @foreach ($fotoLain as $img)
         <div class="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-800">
-            <img src="{{ asset('storage/' . $img->file_path) }}" alt="Gambar Villa: {{ $img->file_name }}"
+            <img src="{{ asset($img->file_path) }}" alt="Gambar Villa: {{ $img->file_name }}"
                 class="h-full w-full object-cover transition-transform duration-300 hover:scale-105">
         </div>
     @endforeach
