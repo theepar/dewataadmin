@@ -121,7 +121,7 @@ class VillaResource extends Resource
                             ->helperText('Drag & drop hingga 20 gambar tambahan.')
                             ->default(fn($record) =>
                                 $record
-                                ? $record->media()->where('type', 'image')->pluck('file_path')->skip(1)->values()->toArray()
+                                ? $record->media()->where('type', 'image')->pluck('file_path')->values()->toArray()
                                 : []
                             ),
                     ]),
