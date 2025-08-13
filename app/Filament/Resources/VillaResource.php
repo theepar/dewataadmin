@@ -7,11 +7,11 @@ use App\Models\Villa;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\MultiSelect;
 use Filament\Forms\Components\Repeater;
+
+// --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-
-// --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -111,21 +111,8 @@ class VillaResource extends Resource
 
                 Section::make('Media Villa')
                     ->schema([
-                        FileUpload::make('cover_image')
-                            ->label('Cover Villa')
-                            ->image()
-                            ->directory('villa-images')
-                            ->preserveFilenames()
-                            ->maxFiles(1)
-                            ->helperText('Upload gambar utama/cover villa.')
-                            ->default(fn($record) =>
-                                $record
-                                ? $record->media()->where('type', 'image')->pluck('file_path')->take(1)->values()->toArray()
-                                : []
-                            ),
-
                         FileUpload::make('images')
-                            ->label('Gambar Lain')
+                            ->label('Gambar')
                             ->multiple()
                             ->maxFiles(20)
                             ->image()
