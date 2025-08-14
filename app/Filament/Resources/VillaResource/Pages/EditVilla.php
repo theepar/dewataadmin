@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources\VillaResource\Pages;
 
 use App\Filament\Resources\VillaResource;
@@ -19,10 +20,17 @@ class EditVilla extends EditRecord
 
     protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
-        // Ambil semua gambar lama milik property ini
+        // Ambil gambar lama
         $oldImages = $record->media()->where('type', 'image')->pluck('file_path')->toArray();
         $newImages = $data['images'] ?? [];
         $cover     = $data['cover_image'][0] ?? null;
+
+        // Jika tidak ada input gambar baru, jangan hapus gambar lama
+        if (empty($newImages) && !$cover) {
+            unset($data['cover_image'], $data['images'], $data['video']);
+            $record->update($data);
+            return $record;
+        }
 
         // Ambil cover lama (gambar pertama)
         $oldCover = $record->media()->where('type', 'image')->pluck('file_path')->first();

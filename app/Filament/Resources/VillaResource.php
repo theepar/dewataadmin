@@ -1,31 +1,33 @@
 <?php
+
 namespace App\Filament\Resources;
 
 // --- NAMESPACE DASAR FILAMENT ---
-use App\Filament\Resources\VillaResource\Pages;
+use Storage;
 use App\Models\Villa;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\MultiSelect;
-use Filament\Forms\Components\Repeater;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use Filament\Resources\Resource;
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\ImageColumn;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Repeater;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Forms\Components\MultiSelect;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use App\Filament\Resources\VillaResource\Pages;
 
 class VillaResource extends Resource
 {
@@ -128,13 +130,45 @@ class VillaResource extends Resource
                             ->disk('public')
                             ->preserveFilenames()
                             ->helperText('Drag & drop hingga 20 gambar tambahan.')
-                            ->default(fn($record) =>
+                            ->default(
+                                fn($record) =>
                                 $record
-                                ? $record->media()->where('type', 'image')->pluck('file_path')->values()->toArray()
-                                : []
-                            ),
+                                    ? $record->media()->where('type', 'image')->pluck('file_path')->values()->toArray()
+                                    : []
+                            )
+                            ->previewable(true)
+                            ->deleteUploadedFileUsing(function ($filePath, $record) {
+                                if ($record) {
+                                    $media = $record->media()->where('file_path', $filePath)->first();
+                                    if ($media) {
+                                        $media->delete();
+                                    }
+                                }
+                                Storage::disk('public')->delete($filePath);
+                            }),
                     ]),
 
+                Section::make('History Gambar Villa')
+                    ->schema([
+                        Repeater::make('media_history')
+                            ->label('Gambar Sebelumnya')
+                            ->relationship('media')
+                            ->schema([
+                                FileUpload::make('file_path')
+                                    ->disk('public')
+                                    ->directory('villa-images')
+                                    ->image()
+                                    ->previewable(true)
+                                    ->disabled()
+                                    ->extraAttributes([ // Ini cara untuk menampilkan tombol sebagai bagian dari FileUpload
+                                        'class' => 'group relative',
+                                    ]),
+                            ])
+                            ->columns(3) // 3 gambar per baris
+                            ->minItems(0)
+                            ->maxItems(20)
+                            ->disableLabel(),
+                    ]),
                 Section::make('Fasilitas Villa')
                     ->schema([
                         Repeater::make('amenities')
@@ -150,6 +184,7 @@ class VillaResource extends Resource
                             ->minItems(1)
                             ->columns(2),
                     ]),
+
             ]);
     }
 
@@ -159,7 +194,8 @@ class VillaResource extends Resource
             ->columns([
                 ImageColumn::make('media')
                     ->label('Cover')
-                    ->getStateUsing(fn($record) =>
+                    ->getStateUsing(
+                        fn($record) =>
                         optional($record->media()->where('type', 'image')->first())->file_path
                     )
                     ->disk('public')
@@ -208,10 +244,10 @@ class VillaResource extends Resource
                     ->modalContent(fn($record) => view('filament.modals.villa-preview', [
                         'villa'    => $record,
                         'statuses' => is_array($record->ownership_status)
-                        ? $record->ownership_status
-                        : (is_string($record->ownership_status) && ! empty($record->ownership_status)
-                            ? explode(',', $record->ownership_status)
-                            : []),
+                            ? $record->ownership_status
+                            : (is_string($record->ownership_status) && ! empty($record->ownership_status)
+                                ? explode(',', $record->ownership_status)
+                                : []),
                     ])),
             ])
             ->bulkActions([
