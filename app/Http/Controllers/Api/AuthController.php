@@ -30,17 +30,17 @@ class AuthController extends Controller
         }
 
         // Hapus token lama untuk device yang sama
-        $user->tokens()->where('name', $request->device_name)->delete();
+        $user->tokens()->where('name', $user->name.'-AuthToken')->delete();
 
         // Buat token baru
-        $token = $user->createToken($request->device_name)->plainTextToken;
-        $role  = $user->roles->pluck('name')->first();
+        $token = $user->createToken($user->name.'-AuthToken')->plainTextToken;
+        $role  = $user->roles->pluck('name')->first(); // Ambil role utama user
 
         return response()->json([
-            'message' => 'Login berhasil!',
-            'user'    => $user->only(['id', 'name', 'email']),
-            'token'   => $token,
-            'role'    => $role,
+            'message'      => 'Login berhasil!',
+            'user'         => $user->only(['id', 'name', 'email']),
+            'access_token' => $token,
+            'role'         => $role,
         ]);
     }
 
@@ -49,7 +49,7 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $request->user()->tokens()->delete();
 
         return response()->json(['message' => 'Logout berhasil!']);
     }
@@ -78,13 +78,13 @@ class AuthController extends Controller
             $user->assignRole($pegawaiRole);
         }
 
-        $token = $user->createToken($request->device_name)->plainTextToken;
+        $token = $user->createToken($user->name.'-AuthToken')->plainTextToken;
 
         return response()->json([
-            'message' => 'Registrasi berhasil!',
-            'user'    => $user->only(['id', 'name', 'email']),
-            'token'   => $token,
-            'roles'   => $user->getRoleNames(),
+            'message'      => 'Registrasi berhasil!',
+            'user'         => $user->only(['id', 'name', 'email']),
+            'access_token' => $token,
+            'roles'        => $user->getRoleNames(),
         ], 201);
     }
 }

@@ -14,8 +14,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Listener untuk event User created
-        // Secara otomatis memberikan peran 'pegawai' setiap ada user baru
         User::created(function (User $user) {
             $user->assignRole('pegawai');
         });
