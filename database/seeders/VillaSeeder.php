@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Seeders;
 
 use App\Models\Villa;
@@ -19,6 +20,7 @@ class VillaSeeder extends Seeder
                 'bedroom'          => 1,
                 'bed'              => 1,
                 'bathroom'         => 1,
+                'guest'            => 2, // Tambahkan guest di sini
                 'amenities'        => [
                     // Bathroom
                     ['name' => 'Bathroom', 'available' => true],
@@ -116,6 +118,7 @@ class VillaSeeder extends Seeder
                 'bedroom'          => 1,
                 'bed'              => 1,
                 'bathroom'         => 1,
+                'guest'            => 2, // Tambahkan guest di sini
                 'amenities'        => [
                     // Bathroom
                     ['name' => 'Bathroom', 'available' => true],
@@ -204,6 +207,7 @@ class VillaSeeder extends Seeder
                 'bedroom'          => 1,
                 'bed'              => 1,
                 'bathroom'         => 1,
+                'guest'            => 2, // Tambahkan guest di sini
                 'amenities'        => [
                     // Bathroom
                     ['name' => 'Bathroom', 'available' => true],

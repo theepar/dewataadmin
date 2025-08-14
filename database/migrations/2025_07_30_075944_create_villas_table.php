@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('villas', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->json('ownership_status')->nullable(); // Ubah ke json
+            $table->json('ownership_status')->nullable();
             $table->unsignedBigInteger('price_idr')->default(0);
             $table->text('description')->nullable();
             $table->string('location')->nullable();
@@ -22,6 +22,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('bedroom')->default(1);
             $table->unsignedTinyInteger('bed')->default(1);
             $table->unsignedTinyInteger('bathroom')->default(1);
+            $table->unsignedTinyInteger('guest')->default(1);
             $table->timestamps();
         });
     }

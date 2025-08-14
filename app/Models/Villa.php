@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,6 +18,7 @@ class Villa extends Model
         'bedroom',
         'bed',
         'bathroom',
+        'guest',         // Tambahkan field guest
         'amenities',
         // tambahkan field lain jika ada
     ];
@@ -30,12 +32,14 @@ class Villa extends Model
     {
         return $this->hasMany(\App\Models\VillaMedia::class, 'villa_id');
     }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'villa_user');
     }
+
     public function units()
     {
-        return $this->hasMany(\App\Models\VillaUnit::class);
+        return $this->hasMany(\App\Models\VillaUnit::class, 'villa_id');
     }
 }

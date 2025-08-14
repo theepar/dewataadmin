@@ -102,6 +102,13 @@ class VillaResource extends Resource
                             ->default(1)
                             ->required(),
 
+                        TextInput::make('guest')
+                            ->label('Jumlah Guest')
+                            ->numeric()
+                            ->minValue(1)
+                            ->default(1)
+                            ->required(),
+
                         TextInput::make('unit_count')
                             ->label('Jumlah Unit')
                             ->numeric()
