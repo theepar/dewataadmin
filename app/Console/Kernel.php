@@ -12,7 +12,6 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('ical:sync')->cron('*/10 * * * *');
-        // $schedule->command('inspire')->hourly();
     }
 
     /**

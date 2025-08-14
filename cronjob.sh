@@ -1,4 +1,4 @@
 #!/bin/bash
 
 LOGFILE="$(dirname "$0")/cronjob.log"
-php artisan schedule:work >> "$LOGFILE" 2>&1
+php artisan ical:sync >> "$LOGFILE" 2>&1
