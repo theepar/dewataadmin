@@ -33,7 +33,7 @@ class AuthController extends Controller
         $user->tokens()->where('name', $user->name.'-AuthToken')->delete();
 
         // Buat token baru
-        $token = $user->createToken($user->name.'-AuthToken')->plainTextToken;
+        $token = $user->createToken($request->device_name)->plainTextToken;
         $role  = $user->roles->pluck('name')->first(); // Ambil role utama user
 
         return response()->json([
@@ -78,7 +78,7 @@ class AuthController extends Controller
             $user->assignRole($pegawaiRole);
         }
 
-        $token = $user->createToken($user->name.'-AuthToken')->plainTextToken;
+        $token = $user->createToken($request->device_name)->plainTextToken;
 
         return response()->json([
             'message'      => 'Registrasi berhasil!',
