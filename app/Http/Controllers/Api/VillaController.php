@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -34,6 +35,7 @@ class VillaController extends Controller
                     'ownership_status' => $villa->ownership_status,
                     'price_idr'        => $villa->price_idr,
                     'description'      => $villa->description,
+                    'guest'            => $villa->guest, // Tambahkan guest di sini
                     'created_at'       => $villa->created_at->format('Y-m-d H:i:s'),
                     'updated_at'       => $villa->updated_at->format('Y-m-d H:i:s'),
                     'images'           => $villa->media->map(fn($media) => asset('villa-images/' . $media->file_name)),
@@ -81,6 +83,7 @@ class VillaController extends Controller
                 'ownership_status' => $villa->ownership_status,
                 'price_idr'        => $villa->price_idr,
                 'description'      => $villa->description,
+                'guest'            => $villa->guest, // Tambahkan guest di sini
                 'created_at'       => $villa->created_at->format('Y-m-d H:i:s'),
                 'updated_at'       => $villa->updated_at->format('Y-m-d H:i:s'),
                 'images'           => $villa->media->map(fn($media) => asset('villa-images/' . $media->file_name)),
@@ -112,6 +115,7 @@ class VillaController extends Controller
                     'ownership_status' => $villa->ownership_status,
                     'price_idr'        => $villa->price_idr,
                     'description'      => $villa->description,
+                    'guest'            => $villa->guest, // Tambahkan guest di sini
                     'created_at'       => $villa->created_at->format('Y-m-d H:i:s'),
                     'updated_at'       => $villa->updated_at->format('Y-m-d H:i:s'),
                     'images'           => $villa->media->map(fn($media) => asset('villa-images/' . $media->file_name)),
