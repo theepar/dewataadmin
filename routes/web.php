@@ -26,8 +26,6 @@ Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkE
 Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
 Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
 
-Route::middleware('website.api')->get('/website/villas', [VillaController::class, 'websiteIndex']);
-
 Route::get('/villa-images/{filename}', function ($filename) {
     $path = storage_path('app/public/villa-images/' . $filename);
     if (! file_exists($path)) {

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\IcalLinkController;
 use App\Http\Controllers\Api\VillaController;
+use App\Http\Controllers\Api\WebsiteVillaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,8 +23,8 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Website API Key Protected Routes
 Route::middleware('website.api')->prefix('website')->group(function () {
-    Route::get('/villas', [VillaController::class, 'index']);
-    Route::get('/villas/{id}', [VillaController::class, 'show']);
+    Route::get('/villas', [WebsiteVillaController::class, 'index']);
+    Route::get('/villas/{id}', [WebsiteVillaController::class, 'show']);
 });
 
 // --- Protected Routes (Require Sanctum Authentication) ---

@@ -34,12 +34,13 @@ class AuthController extends Controller
 
         // Buat token baru
         $token = $user->createToken($request->device_name)->plainTextToken;
+        $role  = $user->roles->pluck('name')->first();
 
         return response()->json([
             'message' => 'Login berhasil!',
             'user'    => $user->only(['id', 'name', 'email']),
             'token'   => $token,
-            'roles'   => $user->getRoleNames(),
+            'role'    => $role,
         ]);
     }
 

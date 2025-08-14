@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('website_name');
             $table->string('api_key')->unique();
-            $table->unsignedBigInteger('user_id');
             $table->timestamps();
         });
     }

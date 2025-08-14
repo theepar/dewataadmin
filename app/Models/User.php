@@ -47,8 +47,4 @@ class User extends Authenticatable
         return $this->belongsToMany(Villa::class, 'villa_user');
     }
 
-    public function websiteApiKeys()
-    {
-        return $this->hasMany(\App\Models\WebsiteApiKey::class, 'user_id');
-    }
 }
