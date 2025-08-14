@@ -8,7 +8,7 @@ class VerifyWebsiteApiKey
 {
     public function handle($request, Closure $next)
     {
-        $apiKey = $request->header('X-Website-Api-Key');
+        $apiKey = $request->header('X-API-KEY');
         if (! WebsiteApiKey::where('api_key', $apiKey)->exists()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }

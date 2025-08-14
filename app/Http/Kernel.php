@@ -72,7 +72,6 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
-        'admin.only'  => \App\Http\Middleware\AdminOnly::class,
         'website.api' => \App\Http\Middleware\VerifyWebsiteApiKey::class,
     ];
 }

@@ -23,6 +23,13 @@ class WebsiteApiKeyResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
+            Forms\Components\Select::make('user_id')
+                ->label('User')
+                ->options(
+                    \App\Models\User::pluck('name', 'id')->toArray()
+                )
+                ->searchable()
+                ->required(),
             Forms\Components\TextInput::make('website_name')
                 ->required()
                 ->label('Website Name'),

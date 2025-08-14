@@ -20,27 +20,23 @@ use Illuminate\Support\Facades\Route;
 // --- Public Routes ---
 Route::post('/login', [AuthController::class, 'login']);
 
-// --- Website API Routes ---
-Route::prefix('web')->middleware('website.api')->group(function () {
+// Website API Key Protected Routes
+Route::middleware('website.api')->prefix('website')->group(function () {
     Route::get('/villas', [VillaController::class, 'index']);
     Route::get('/villas/{id}', [VillaController::class, 'show']);
 });
 
 // --- Protected Routes (Require Sanctum Authentication) ---
 Route::middleware('auth:sanctum')->group(function () {
-    // Get current authenticated user
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // Logout endpoint
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Villas endpoints
     Route::get('/villas', [VillaController::class, 'index']);
     Route::get('/villas/{id}', [VillaController::class, 'show']);
 
-    // Ical Links endpoints
     Route::get('/ical-links', [IcalLinkController::class, 'index']);
     Route::get('/ical-links/{id}', [IcalLinkController::class, 'show']);
 });
