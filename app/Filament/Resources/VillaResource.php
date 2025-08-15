@@ -59,6 +59,7 @@ class VillaResource extends Resource
                                 'Freehold'  => 'Freehold',
                                 'Leasehold' => 'Leasehold',
                                 'Monthly'   => 'Monthly',
+                                'Daily'     => 'Daily',
                             ])
                             ->required()
                             ->searchable(),
@@ -75,7 +76,7 @@ class VillaResource extends Resource
                             ->columnSpanFull()
                             ->helperText('Tempelkan URL Google Maps lokasi villa di sini.'),
 
-                        RichEditor::make('description')
+                        \Filament\Forms\Components\Textarea::make('description')
                             ->label('Deskripsi Villa')
                             ->columnSpanFull()
                             ->nullable(),
@@ -237,6 +238,7 @@ class VillaResource extends Resource
                         'Freehold'  => 'Freehold',
                         'Leasehold' => 'Leasehold',
                         'Monthly'   => 'Monthly',
+                        'Daily'     => 'Daily',
                     ]),
             ])
             ->actions([
