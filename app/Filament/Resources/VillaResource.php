@@ -76,7 +76,7 @@ class VillaResource extends Resource
                             ->columnSpanFull()
                             ->helperText('Tempelkan URL Google Maps lokasi villa di sini.'),
 
-                        \Filament\Forms\Components\Textarea::make('description')
+                        RichEditor::make('description')
                             ->label('Deskripsi Villa')
                             ->columnSpanFull()
                             ->nullable(),
@@ -238,7 +238,7 @@ class VillaResource extends Resource
                         'Freehold'  => 'Freehold',
                         'Leasehold' => 'Leasehold',
                         'Monthly'   => 'Monthly',
-                        'Daily'     => 'Daily',
+                        'Daily'   => 'Daily',
                     ]),
             ])
             ->actions([
