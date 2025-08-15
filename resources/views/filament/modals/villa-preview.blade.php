@@ -34,7 +34,9 @@
 
     <div>
         <h3 class="mt-2 text-lg font-semibold text-white">Tentang properti ini</h3>
-        <div class="prose prose-invert text-md line-clamp-6 max-w-none text-gray-400">{!! $villa->description ?? 'Tidak ada deskripsi.' !!}</div>
+        <div class="prose prose-invert text-md line-clamp-6 max-w-none text-gray-400" style="--tw-prose-bold: #9ca3af;">
+            {!! $villa->description ?? 'Tidak ada deskripsi.' !!}
+        </div>
     </div>
     <div>
         <h3 class="mt-2 text-lg font-semibold text-white">Harga properti ini</h3>
