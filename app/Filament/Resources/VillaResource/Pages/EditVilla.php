@@ -103,18 +103,6 @@ class EditVilla extends EditRecord
             }
         }
 
-        // Sinkronisasi: Hapus file di local yang tidak ada di database
-        $dbFiles = \App\Models\VillaMedia::where('villa_id', $record->id)->pluck('file_path')->toArray(); // refresh
-        $localFiles = collect(Storage::disk('public')->files('villa-images'))->map(function ($file) {
-            return 'villa-images/' . basename($file);
-        })->toArray();
-
-        foreach ($localFiles as $file) {
-            if (!in_array($file, $dbFiles)) {
-                Storage::disk('public')->delete($file);
-            }
-        }
-
         return $record;
     }
 
