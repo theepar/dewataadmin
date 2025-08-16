@@ -13,10 +13,10 @@ class WebApiKeySeeder extends Seeder
     {
         $admin = User::role('admin')->first();
         if ($admin) {
-            DB::table('web_api_keys')->insert([
+            DB::table('website_api_keys')->insert([
                 'user_id'      => $admin->id,
                 'website_name' => 'nextjs',
-                'key'          => Str::uuid(), // atau Str::random(32)
+                'api_key'     => Str::uuid(), // atau Str::random(32)
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ]);
