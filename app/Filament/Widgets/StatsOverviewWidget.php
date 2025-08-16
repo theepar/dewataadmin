@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Widgets;
 
 use Carbon\Carbon;                                      // << PENTING: Ganti ini
@@ -17,7 +18,7 @@ class StatsOverviewWidget extends BaseWidget
                 ->descriptionIcon('heroicon-o-home')
                 ->color('info'),
 
-            Stat::make('Total iCal Link', \App\Models\IcalLink::count())
+            Stat::make('Total iCal Link', \App\Models\VillaUnit::whereNotNull('ical_link')->where('ical_link', '!=', '')->count())
                 ->description('Jumlah link iCal yang disinkronkan')
                 ->descriptionIcon('heroicon-o-link')
                 ->color('success'),

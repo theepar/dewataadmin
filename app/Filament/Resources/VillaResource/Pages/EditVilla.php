@@ -30,8 +30,7 @@ class EditVilla extends EditRecord
         foreach ($unregisteredFiles as $file) {
             Storage::disk('public')->delete($file);
             // Jika ada data media di DB, hapus juga
-            \App\Models\VillaMedia::where('file_path', $file)->delete();
-            \Illuminate\Support\Facades\Log::info("Auto delete unregistered image: $file");
+            VillaMedia::where('file_path', $file)->delete();
         }
 
         // Ambil gambar lama

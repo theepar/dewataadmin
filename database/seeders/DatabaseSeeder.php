@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -16,6 +17,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             UserSeeder::class,
             VillaSeeder::class,
+            WebApiKeySeeder::class,
         ]);
     }
 }
