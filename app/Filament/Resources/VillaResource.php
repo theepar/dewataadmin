@@ -25,7 +25,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\MultiSelect;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
-use Illuminate\Support\Facades\Storage;
+use Filament\Tables\Actions\BulkAction;
 
 use App\Filament\Resources\VillaResource\Pages;
 
@@ -113,7 +113,7 @@ class VillaResource extends Resource
                         TextInput::make('unit_count')
                             ->label('Jumlah Unit')
                             ->numeric()
-                            ->minValue(1)
+                            ->default(1)
                             ->required()
                             ->dehydrated(false)
                             ->formatStateUsing(fn($state, $record) => $record ? $record->units()->count() : 1),
@@ -130,21 +130,14 @@ class VillaResource extends Resource
                 Section::make('Media Villa')
                     ->schema([
                         FileUpload::make('images')
-                            ->label('Gambar')
+                            ->label('Gambar Villa')
                             ->multiple()
-                            ->maxFiles(20)
-                            ->image()
-                            ->directory('villa-images')
                             ->disk('public')
+                            ->directory('villa-images')
                             ->preserveFilenames()
                             ->helperText('Drag & drop hingga 20 gambar tambahan.')
-                            ->default(
-                                fn($record) =>
-                                $record
-                                    ? $record->media()->where('type', 'image')->pluck('file_path')->values()->toArray()
-                                    : []
-                            )
-                            ->previewable(true)
+                            ->maxFiles(20)
+                            ->image(),
                     ]),
 
                 Section::make('History Gambar Villa')
@@ -246,6 +239,22 @@ class VillaResource extends Resource
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('deleteWithMedia')
+                        ->label('Hapus Villa & Media')
+                        ->action(function ($records) {
+                            foreach ($records as $villa) {
+                                foreach ($villa->media as $media) {
+                                    $file = public_path($media->file_path);
+                                    if (file_exists($file)) {
+                                        @unlink($file); // Hapus file fisik dulu
+                                    }
+                                    $media->delete(); // Baru hapus data media di database
+                                }
+                                $villa->delete();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('villa_media', function (Blueprint $table) {
             $table->id();
             $table->foreignId('villa_id')->constrained()->onDelete('cascade');
-            $table->string('file_path');
-            $table->string('file_name');
-            $table->enum('type', ['image', 'video']);
+            $table->string('file_path')->nullable();
+            $table->string('file_name')->nullable();
+            $table->enum('type', ['image']);
             $table->timestamps();
         });
     }

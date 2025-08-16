@@ -4,46 +4,27 @@ namespace App\Filament\Resources\VillaResource\Pages;
 
 use Filament\Actions;
 use App\Models\VillaUnit;
-use App\Models\VillaMedia;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\VillaResource;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EditVilla extends EditRecord
 {
     protected static string $resource = VillaResource::class;
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\DeleteAction::make(),
+        ];
+    }
+
     protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
-        // Ambil semua gambar yang ada di folder villa-images
-        $folderFiles = collect(Storage::disk('public')->files('villa-images'));
-
-        // Ambil semua gambar yang terdaftar di database untuk villa ini
-        $dbFiles = $record->media()->where('type', 'image')->pluck('file_path')->toArray();
-
-        // Cari file yang ada di folder tapi tidak terdaftar di database
-        $unregisteredFiles = $folderFiles->diff($dbFiles);
-
-        // Hapus file yang tidak terdaftar di database
-        foreach ($unregisteredFiles as $file) {
-            Storage::disk('public')->delete($file);
-            // Jika ada data media di DB, hapus juga
-            VillaMedia::where('file_path', $file)->delete();
-        }
-
-        // Ambil gambar lama
+        // Ambil semua gambar lama milik property ini
         $oldImages = $record->media()->where('type', 'image')->pluck('file_path')->toArray();
         $newImages = $data['images'] ?? [];
         $cover     = $data['cover_image'][0] ?? null;
-
-        // Jika tidak ada input gambar baru, jangan hapus gambar lama
-        if (empty($newImages) && !$cover) {
-            unset($data['cover_image'], $data['images'], $data['video']);
-            $record->update($data);
-            return $record;
-        }
 
         // Ambil cover lama (gambar pertama)
         $oldCover = $record->media()->where('type', 'image')->pluck('file_path')->first();
@@ -54,54 +35,30 @@ class EditVilla extends EditRecord
             array_unshift($allNewImages, $cover);
         }
 
-        // Hapus gambar yang dihapus user (tidak ada di input baru)
-        $deletedImages = array_diff($oldImages, $allNewImages);
-        foreach ($deletedImages as $img) {
-            // Cek file sebelum hapus
-            $filePath = public_path($img);
-            $deleted = false;
-
-            if (Storage::disk('public')->exists($img)) {
-                $deleted = Storage::disk('public')->delete($img);
-            }
-
-            // Jika gagal hapus via Storage, coba hapus manual
-            if (!$deleted && file_exists($filePath)) {
-                $deleted = unlink($filePath);
-            }
-
-            // Log hasil hapus
-            Log::info("Delete image: $img, result: " . ($deleted ? 'success' : 'fail'));
-
-            // Hapus data media di database
-            VillaMedia::where('villa_id', $record->id)->where('file_path', $img)->delete();
-        }
-
         // Update/replace cover jika diganti
         if ($cover && $oldCover && $cover !== $oldCover) {
-            // Hapus cover lama hanya jika cover lama tidak ada di daftar gambar baru
-            if (!in_array($oldCover, $allNewImages)) {
-                Storage::disk('public')->delete($oldCover);
-                VillaMedia::where('villa_id', $record->id)->where('file_path', $oldCover)->delete();
-            }
+            // Hapus cover lama
+            Storage::disk('public')->delete($oldCover);
+            \App\Models\VillaMedia::where('villa_id', $record->id)->where('file_path', $oldCover)->delete();
 
             // Simpan cover baru jika upload baru
-            if ($cover instanceof TemporaryUploadedFile) {
-                $path     = $cover->store('villa-images', 'public');
+            if ($cover instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
                 $fileName = $cover->getClientOriginalName();
-                VillaMedia::create([
+                $path     = 'villa-images/' . $fileName;
+                $cover->storeAs('villa-images', $fileName, 'public');
+                \App\Models\VillaMedia::create([
                     'villa_id'  => $record->id,
                     'file_path' => $path,
                     'file_name' => $fileName,
                     'type'      => 'image',
                 ]);
             } elseif (is_string($cover) && str_contains($cover, '/')) {
-                // Jika cover sudah ada di storage, simpan ke DB jika belum ada
-                if (! in_array($cover, $oldImages)) {
-                    VillaMedia::create([
+                if (! in_array($cover, $oldImages) && $cover) {
+                    $fileName = $cover;
+                    \App\Models\VillaMedia::create([
                         'villa_id'  => $record->id,
                         'file_path' => $cover,
-                        'file_name' => basename($cover),
+                        'file_name' => $fileName,
                         'type'      => 'image',
                     ]);
                 }
@@ -110,22 +67,23 @@ class EditVilla extends EditRecord
 
         // Simpan gambar lain (hanya yang baru diupload)
         foreach ($newImages as $img) {
-            if ($img instanceof TemporaryUploadedFile) {
-                $path     = $img->store('villa-images', 'public');
+            if ($img instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
                 $fileName = $img->getClientOriginalName();
-                VillaMedia::create([
+                $path     = 'villa-images/' . $fileName;
+                $img->storeAs('villa-images', $fileName, 'public');
+                \App\Models\VillaMedia::create([
                     'villa_id'  => $record->id,
                     'file_path' => $path,
                     'file_name' => $fileName,
                     'type'      => 'image',
                 ]);
             } elseif (is_string($img) && str_contains($img, '/')) {
-                // Jika gambar lama sudah ada, tidak perlu upload ulang
-                if (! in_array($img, $oldImages)) {
-                    VillaMedia::create([
+                if (! in_array($img, $oldImages) && $img) {
+                    $fileName = $img;
+                    \App\Models\VillaMedia::create([
                         'villa_id'  => $record->id,
                         'file_path' => $img,
-                        'file_name' => basename($img),
+                        'file_name' => $fileName,
                         'type'      => 'image',
                     ]);
                 }
@@ -134,8 +92,28 @@ class EditVilla extends EditRecord
 
         unset($data['cover_image'], $data['images'], $data['video']);
 
-        // Tambahkan baris ini agar data utama villa (termasuk ownership_status) ikut terupdate:
+        // Update data utama villa
         $record->update($data);
+
+        // Sinkronisasi: Hapus record di database jika file tidak ada di local
+        $dbFiles = \App\Models\VillaMedia::where('villa_id', $record->id)->pluck('file_path')->toArray();
+        foreach ($dbFiles as $file) {
+            if (!Storage::disk('public')->exists($file)) {
+                \App\Models\VillaMedia::where('villa_id', $record->id)->where('file_path', $file)->delete();
+            }
+        }
+
+        // Sinkronisasi: Hapus file di local yang tidak ada di database
+        $dbFiles = \App\Models\VillaMedia::where('villa_id', $record->id)->pluck('file_path')->toArray(); // refresh
+        $localFiles = collect(Storage::disk('public')->files('villa-images'))->map(function ($file) {
+            return 'villa-images/' . basename($file);
+        })->toArray();
+
+        foreach ($localFiles as $file) {
+            if (!in_array($file, $dbFiles)) {
+                Storage::disk('public')->delete($file);
+            }
+        }
 
         return $record;
     }
