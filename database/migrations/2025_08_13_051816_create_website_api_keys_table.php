@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('website_api_keys', function (Blueprint $table) {
+        Schema::create('web_api_keys', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('website_name');
-            $table->string('api_key')->unique();
+            $table->string('key');
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('website_api_keys');
+        Schema::dropIfExists('web_api_keys');
     }
 };
