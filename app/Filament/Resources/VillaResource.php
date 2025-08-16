@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 // --- NAMESPACE DASAR FILAMENT ---
-use Storage;
 use App\Models\Villa;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
@@ -11,7 +10,6 @@ use Filament\Resources\Resource;
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
 use Filament\Tables\Actions\Action;
-use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Section;
@@ -27,6 +25,8 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\MultiSelect;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
+use Illuminate\Support\Facades\Storage;
+
 use App\Filament\Resources\VillaResource\Pages;
 
 class VillaResource extends Resource
@@ -62,7 +62,7 @@ class VillaResource extends Resource
                                 'Daily'     => 'Daily',
                             ])
                             ->required()
-                            ->searchable(),
+                            ->searchable(false),
 
                         TextInput::make('price_idr')
                             ->label('Harga (IDR)')
@@ -145,15 +145,6 @@ class VillaResource extends Resource
                                     : []
                             )
                             ->previewable(true)
-                            ->deleteUploadedFileUsing(function ($filePath, $record) {
-                                if ($record) {
-                                    $media = $record->media()->where('file_path', $filePath)->first();
-                                    if ($media) {
-                                        $media->delete();
-                                    }
-                                }
-                                Storage::disk('public')->delete($filePath);
-                            }),
                     ]),
 
                 Section::make('History Gambar Villa')
@@ -167,15 +158,9 @@ class VillaResource extends Resource
                                     ->directory('villa-images')
                                     ->image()
                                     ->previewable(true)
-                                    ->disabled()
-                                    ->extraAttributes([ // Ini cara untuk menampilkan tombol sebagai bagian dari FileUpload
-                                        'class' => 'group relative',
-                                    ]),
                             ])
-                            ->columns(3) // 3 gambar per baris
                             ->minItems(0)
                             ->maxItems(20)
-                            ->disableLabel(),
                     ]),
                 Section::make('Fasilitas Villa')
                     ->schema([

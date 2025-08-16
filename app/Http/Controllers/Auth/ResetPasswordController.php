@@ -1,8 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 
 class ResetPasswordController extends Controller
@@ -23,13 +25,13 @@ class ResetPasswordController extends Controller
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
-                $user->password = \Illuminate\Support\Facades\Hash::make($password);
+                $user->password = Hash::make($password);
                 $user->save();
             }
         );
 
         return $status === Password::PASSWORD_RESET
-        ? back()->with('status', 'Password berhasil diubah!')
-        : back()->withErrors(['email' => [__($status)]]);
+            ? back()->with('status', 'Password berhasil diubah!')
+            : back()->withErrors(['email' => [__($status)]]);
     }
 }

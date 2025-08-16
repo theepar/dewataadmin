@@ -1,12 +1,24 @@
 <?php
+
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\LoginHistoryResource\Pages;
+// --- MODEL ---
 use App\Models\LoginHistory;
+
+// --- FILAMENT RESOURCE & COMPONENTS ---
+use App\Filament\Resources\LoginHistoryResource\Pages;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
+
+// --- FILAMENT TABLES ---
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\CreateAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+
+// --- LARAVEL ELOQUENT ---
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,9 +40,9 @@ class LoginHistoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('ip_address')->label('IP Address'),
-                Tables\Columns\TextColumn::make('user_agent')->label('Device'),
-                Tables\Columns\TextColumn::make('logged_in_at')
+                TextColumn::make('ip_address')->label('IP Address'),
+                TextColumn::make('user_agent')->label('Device'),
+                TextColumn::make('logged_in_at')
                     ->label('Login Time')
                     ->dateTime('M d, Y H:i:s')
                     ->timezone('Asia/Makassar'), // UTC+8
@@ -39,15 +51,15 @@ class LoginHistoryResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ]);
     }
 

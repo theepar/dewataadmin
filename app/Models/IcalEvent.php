@@ -1,16 +1,16 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class IcalEvent extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'ical_link_id',
+        'villa_unit_id',
         'uid',
         'summary',
         'description',
@@ -31,18 +31,8 @@ class IcalEvent extends Model
         'is_cancelled' => 'boolean',
     ];
 
-    public function villa()
-    {
-        return $this->belongsTo(\App\Models\Villa::class, 'villa_id');
-    }
-
     public function villaUnit()
     {
         return $this->belongsTo(\App\Models\VillaUnit::class, 'villa_unit_id');
-    }
-
-    public function icalLink()
-    {
-        return $this->belongsTo(\App\Models\IcalLink::class, 'ical_link_id');
     }
 }

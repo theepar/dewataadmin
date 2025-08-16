@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,6 +16,7 @@ return new class extends Migration
             $table->foreignId('villa_id')->constrained('villas')->onDelete('cascade');
             $table->string('unit_number')->nullable(); // Nomor atau kode unit
             $table->string('ical_link')->nullable();   // Link ical khusus unit
+            $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
         });
     }

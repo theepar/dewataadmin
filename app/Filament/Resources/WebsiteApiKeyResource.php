@@ -1,13 +1,18 @@
 <?php
+
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\WebsiteApiKeyResource\Pages;
+// --- MODEL ---
 use App\Models\WebsiteApiKey;
-use Filament\Forms;
+
+// --- FILAMENT RESOURCE & KOMPONEN ---
+use App\Filament\Resources\WebsiteApiKeyResource\Pages;
 use Filament\Forms\Form;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 
 class WebsiteApiKeyResource extends Resource
 {
@@ -23,17 +28,17 @@ class WebsiteApiKeyResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Select::make('user_id')
+            Select::make('user_id')
                 ->label('User')
                 ->options(
                     \App\Models\User::pluck('name', 'id')->toArray()
                 )
                 ->searchable()
                 ->required(),
-            Forms\Components\TextInput::make('website_name')
+            TextInput::make('website_name')
                 ->required()
                 ->label('Website Name'),
-            Forms\Components\TextInput::make('api_key')
+            TextInput::make('api_key')
                 ->required()
                 ->readOnly()
                 ->label('API Key')
@@ -44,9 +49,9 @@ class WebsiteApiKeyResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            Tables\Columns\TextColumn::make('website_name')->label('Website Name'),
-            Tables\Columns\TextColumn::make('api_key')->label('API Key')->copyable(),
-            Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Created At'),
+            TextColumn::make('website_name')->label('Website Name'),
+            TextColumn::make('api_key')->label('API Key')->copyable(),
+            TextColumn::make('created_at')->dateTime()->label('Created At'),
         ]);
     }
 

@@ -1,19 +1,13 @@
 /* resources/css/filament.css */
 
-/* Target select options for dark mode */
-.dark select option {
-    /* Gunakan variabel CSS dari Filament primary color */
-    /* Pilih shade yang lebih gelap untuk background, misal --primary-800 atau --primary-700 */
-    background-color: var(--primary-800) !important;
-    color: var(--primary-100) !important;
-    /* Gunakan shade yang lebih terang untuk teks */
-}
-
-/* Opsional: Untuk styling pada elemen Select itu sendiri agar sesuai */
+/* Untuk dark mode: styling select dan option */
 .dark select {
     background-color: var(--primary-900) !important;
-    /* Lebih gelap dari opsi background */
     color: var(--primary-100) !important;
     border-color: var(--primary-700) !important;
-    /* Border sesuai primary color */
+}
+
+.dark select option {
+    background-color: var(--primary-800) !important;
+    color: var(--primary-100) !important;
 }

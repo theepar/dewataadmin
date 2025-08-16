@@ -1,21 +1,30 @@
 <?php
+
 namespace App\Console\Commands;
 
 use App\Models\IcalEvent;
-use App\Models\IcalLink;
+use App\Models\VillaUnit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
 class SyncIcalLinks extends Command
 {
-    protected $signature   = 'ical:sync';
+    protected $signature   = 'ical:sync {unit_id?}';
     protected $description = 'Sync all iCal links and update events if changed';
 
     public function handle()
     {
-        $links = IcalLink::all();
+        $unitId = $this->argument('unit_id');
+        $links = VillaUnit::when($unitId, function ($query, $unitId) {
+            return $query->where('id', $unitId);
+        })->get();
+
         foreach ($links as $record) {
-            $icalUrl = $record->ical_url;
+            $icalUrl = $record->ical_link;
+            if (empty($icalUrl)) {
+                $this->warn("Unit ID {$record->id} tidak punya iCal URL, di-skip.");
+                continue;
+            }
             $ics     = @file_get_contents($icalUrl);
             if (! $ics) {
                 $this->error("Gagal mengambil data dari URL: $icalUrl");
@@ -31,11 +40,11 @@ class SyncIcalLinks extends Command
             $updated  = 0;
             $inserted = 0;
             foreach ($events as $ev) {
-                $uid          = $ev['UID'] ?? null;
+                $uid          = $ev['UID'] ?? uniqid('ical_');
                 $summary      = $ev['SUMMARY'] ?? null;
                 $description  = $ev['DESCRIPTION'] ?? null;
                 $start        = isset($ev['DTSTART']) ? Carbon::parse($ev['DTSTART']) : null;
-                $end          = isset($ev['DTEND']) ? Carbon::parse($ev['DTEND']) : null;
+                $end          = isset($ev['DTEND'])   ? Carbon::parse($ev['DTEND'])   : null;
                 $status       = $ev['STATUS'] ?? null;
                 $propertyName = $ev['LOCATION'] ?? null;
                 $guestName    = $reservationId    = $guestCount    = null;
@@ -55,9 +64,9 @@ class SyncIcalLinks extends Command
                     $durasi = $start->diffInDays($end);
                 }
                 $isCancelled = ($status && strtolower($status) === 'cancelled');
-                $where       = [
-                    'ical_link_id' => $record->id,
-                    'uid'          => $uid,
+                $where = [
+                    'villa_unit_id' => $record->id,
+                    'uid'           => $uid,
                 ];
                 $data = [
                     'summary'        => $summary,
@@ -71,32 +80,16 @@ class SyncIcalLinks extends Command
                     'jumlah_orang'   => $guestCount,
                     'durasi'         => $durasi,
                     'is_cancelled'   => $isCancelled,
+                    'villa_unit_id'  => $record->id, // atau $record->villa_unit_id sesuai model
                 ];
                 $existing = IcalEvent::where($where)->first();
                 if ($existing) {
-                    $isDifferent = false;
-                    foreach ($data as $k => $v) {
-                        if ($existing->$k != $v) {
-                            $isDifferent = true;
-                            break;
-                        }
-                    }
-                    if ($isDifferent) {
-                        $existing->update(array_merge([
-                            'villa_id'      => $record->villa_id,
-                            'villa_unit_id' => $record->villa_unit_id,
-                        ], $data));
-                        $updated++;
-                    }
+                    $existing->update($data); // update jika sudah ada
                 } else {
-                    IcalEvent::create(array_merge($where, [
-                        'villa_id'      => $record->villa_id,
-                        'villa_unit_id' => $record->villa_unit_id,
-                    ], $data));
-                    $inserted++;
+                    IcalEvent::create(array_merge($where, $data)); // insert jika belum ada
                 }
             }
-            $record->last_synced_at = now();
+            $record->last_synced_at = now()->setTimezone('Asia/Makassar');
             $record->save();
             $this->info("[{$record->name}] Sync selesai: $inserted event baru, $updated event diupdate.");
         }

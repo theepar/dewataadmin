@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('ical_events', function (Blueprint $table) {
             $table->id();
-            // Foreign Key ke tabel 'ical_links'
-            $table->foreignId('ical_link_id')->constrained('ical_links')->onDelete('cascade');
+            $table->foreignId('villa_unit_id')->constrained('villa_units')->onDelete('cascade');
 
-            $table->string('uid')->unique()->nullable();
+            $table->string('uid')->nullable();
             $table->string('summary')->nullable();
             $table->text('description')->nullable();
             $table->dateTime('start_date');
@@ -31,7 +30,8 @@ return new class extends Migration
             $table->integer('durasi')->nullable();
             $table->boolean('is_cancelled')->default(false); // Status batal
 
-            $table->index(['ical_link_id', 'start_date', 'end_date']);
+            $table->index(['villa_unit_id', 'start_date', 'end_date']);
+            $table->unique(['villa_unit_id', 'uid']); // Composite unique
 
             $table->timestamps();
         });

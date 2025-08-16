@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\IcalLinkController;
 use App\Http\Controllers\Api\VillaController;
 use App\Http\Controllers\Api\WebsiteVillaController;
 use Illuminate\Http\Request;
@@ -37,7 +36,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/villas', [VillaController::class, 'index']);
     Route::get('/villas/{id}', [VillaController::class, 'show']);
-
-    Route::get('/ical-links', [IcalLinkController::class, 'index']);
-    Route::get('/ical-links/{id}', [IcalLinkController::class, 'show']);
 });

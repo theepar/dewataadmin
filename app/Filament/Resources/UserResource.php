@@ -1,15 +1,27 @@
 <?php
+
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\UserResource\Pages;
+// --- NAMESPACE DASAR FILAMENT ---
 use App\Models\User;
-use Filament\Forms;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
-use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
+
+// --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS & TABLES ---
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Columns\TextColumn;
+
+// --- IMPORTS UNTUK HALAMAN RESOURCE ---
+use App\Filament\Resources\UserResource\Pages;
+
+// --- IMPORTS LAINNYA ---
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -24,9 +36,9 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')->required(),
-                Forms\Components\TextInput::make('email')->email()->required(),
-                Forms\Components\TextInput::make('password')
+                TextInput::make('name')->required(),
+                TextInput::make('email')->email()->required(),
+                TextInput::make('password')
                     ->password()
                     ->minLength(8)
                     ->dehydrateStateUsing(fn($state) => Hash::make($state))
@@ -45,17 +57,17 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable(),
-                Tables\Columns\TextColumn::make('email')->searchable(),
-                Tables\Columns\TextColumn::make('roles.name')->badge(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('name')->searchable(),
+                TextColumn::make('email')->searchable(),
+                TextColumn::make('roles.name')->badge(),
+                TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('sendResetPassword')
+                EditAction::make(),
+                Action::make('sendResetPassword')
                     ->label('Kirim Link Reset Password')
                     ->icon('heroicon-o-envelope')
                     ->visible(fn() => auth()->user()->hasRole('pegawai'))
@@ -75,8 +87,8 @@ class UserResource extends Resource
                     }),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
