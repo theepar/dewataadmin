@@ -63,23 +63,20 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 
 ## Endpoint API
 
-| Controller         | Endpoint                       | Keterangan                                    |
-|--------------------|-------------------------------|------------------------------------------------|
-| AuthController     | POST `/api/login`              | Login user (mobile/admin/pegawai)              |
-|                    | POST `/api/logout`             | Logout user                                    |
-| VillaController    | GET `/api/villas`              | Get villa (admin/pegawai, sesuai role)         |
-|                    | GET `/api/villas/{id}`         | Get detail villa (admin/pegawai, sesuai role)  |
-|                    | GET `/api/website/villas`      | Get semua villa untuk website (pakai API key)  |
-| IcalLinkController | GET `/api/ical-links`          | Get semua iCal link (admin/pegawai)            |
-|                    | GET `/api/ical-links/{id}`     | Get detail iCal link                           |
-| IcalEventController| GET `/api/ical-events`         | Get semua event booking                        |
-|                    | GET `/api/ical-events/{id}`    | Get detail event booking                       |
-| VillaUnitController| GET `/api/villa-units`         | Get semua unit villa dan link iCal per unit    |
-|                    | GET `/api/villa-units/{id}`    | Get detail unit villa                          |
+API sekarang disederhanakan: hanya ada endpoint untuk autentikasi (Auth) dan data villa. Semua data terkait (unit, media, iCal links, event) sudah termasuk di dalam response villa.
 
-**Catatan:**  
-- Endpoint `/api/website/villas` hanya bisa diakses dengan header `Admin: <api_key>`.
-- Endpoint lain menggunakan autentikasi token (Sanctum).
+| Controller     | Endpoint                       | Keterangan |
+|----------------|--------------------------------|-----------|
+| AuthController | POST `/api/login`              | Login user (mobile/admin/pegawai) |
+|                | POST `/api/logout`             | Logout user |
+| VillaController| GET `/api/villas`              | Dapatkan daftar villa (mengembalikan relasi: units, media, ical_links, ical_events). Menggunakan autentikasi (Sanctum) atau header API key untuk website. |
+|                | GET `/api/villas/{id}`         | Detail villa lengkap (termasuk units, media, ical_links, ical_events). Menggunakan autentikasi (Sanctum) atau header API key untuk website. |
+|                | GET `/api/website/villas`      | Endpoint khusus untuk website (akses dengan header `Admin: <api_key>`) — mengembalikan villa lengkap untuk frontend. |
+
+Catatan singkat:
+- Untuk aplikasi mobile/pegawai/admin gunakan token (Laravel Sanctum).
+- Untuk website frontend gunakan header: `Admin: <api_key>`.
+- Response villa sudah mencakup semua resource terkait sehingga tidak perlu endpoint terpisah untuk units/media/ical/events kecuali diperlukan filter
 
 ---
 
