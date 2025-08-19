@@ -111,7 +111,7 @@ class VillaSeeder extends Seeder
             ],
             [
                 'name'             => 'Doni\'s Room',
-                'ownership_status' => ['Monthly, Daily'],
+                'ownership_status' => ['Monthly', 'Daily'],
                 'price_idr'        => 12000000,
                 'description'      => '<p><strong>Daily Price : Rp. 450.000,00 per 1 unit</strong></p><p>Discover the epitome of tranquility and luxury in the heart of Canggu. Our cozy, comfortable, and elegantly designed bedrooms offer a perfect blend of modern style and Balinese charm. Nestled in a quiet area. Large windows invite natural light and offer picturesque views of lush greenery, creating an ambiance of calm and relaxation. bedrooms promise an unforgettable experience that will make you want to return again and again. Ideal for both relaxation and as an investment in your well-being.</p>',
                 'location'         => 'https://maps.app.goo.gl/c2iNVAQ7NuNNJq4X7',
@@ -200,7 +200,7 @@ class VillaSeeder extends Seeder
             ],
             [
                 'name'             => 'Dony\'s Cabin Canggu',
-                'ownership_status' => ['Monthly, Daily'],
+                'ownership_status' => ['Monthly', 'Daily'],
                 'price_idr'        => 25000000,
                 'description'      => '<p><strong>Daily Price : Rp. 1.000.000,00 per 1 unit</strong></p><p>Experience serene living in this ensuite 1-bedroom apartment in the heart of Canggu. Overlooking lush rice fields, it offers a peaceful escape with a touch of Bali’s natural beauty. Fully serviced for your comfort, the apartment features a private bathroom, modern furnishings, AC, and high-speed WiFi. Perfect for digital nomads or couples seeking both tranquility and convenience near cafes, beaches, and trendy spots.</p>',
                 'location'         => 'https://maps.app.goo.gl/CpyEMmv12wRTn4Zr6',

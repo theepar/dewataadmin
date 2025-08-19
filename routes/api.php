@@ -36,4 +36,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/villas', [VillaController::class, 'index']);
     Route::get('/villas/{id}', [VillaController::class, 'show']);
+
+    Route::get('/occupancy', [VillaController::class, 'getOccupancy']);
 });

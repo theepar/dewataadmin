@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -30,7 +31,8 @@ class AuthController extends Controller
         }
 
         // Hapus token lama untuk device yang sama
-        $user->tokens()->where('name', $user->name.'-AuthToken')->delete();
+        // hapus token dengan nama device yang sama (jika ada)
+        $user->tokens()->where('name', $request->device_name)->delete();
 
         // Buat token baru
         $token = $user->createToken($request->device_name)->plainTextToken;
@@ -49,7 +51,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        // hanya hapus token yang sedang dipakai (lebih aman)
+        $current = $request->user()->currentAccessToken();
+        if ($current) {
+            $current->delete();
+        }
 
         return response()->json(['message' => 'Logout berhasil!']);
     }
