@@ -9,7 +9,7 @@ class VillaUnitSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('villa_units')->insertOrIgnore([
+        $rows = [
             [
                 'id' => 1,
                 'villa_id' => 1,
@@ -91,6 +91,13 @@ class VillaUnitSeeder extends Seeder
                 'created_at' => '2025-08-16 11:01:49',
                 'updated_at' => '2025-08-16 11:27:55',
             ],
-        ]);
+        ];
+
+        // upsert: kalau id ada -> update kolom ini, kalau tidak ada -> insert
+        DB::table('villa_units')->upsert(
+            $rows,
+            ['id'], // unik by id
+            ['villa_id', 'unit_number', 'ical_link', 'last_synced_at', 'created_at', 'updated_at'] // kolom yang di-update
+        );
     }
 }

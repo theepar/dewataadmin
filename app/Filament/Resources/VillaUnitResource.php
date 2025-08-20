@@ -81,6 +81,8 @@ class VillaUnitResource extends Resource
                 //
             ])
             ->actions([
+                EditAction::make(), // tombol Edit
+                DeleteAction::make()->requiresConfirmation(), // tombol Delete per baris
                 Action::make('preview_ical')
                     ->label('Preview iCal')
                     ->icon('heroicon-o-eye')
