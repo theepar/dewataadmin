@@ -65,7 +65,7 @@ class VillaUnitResource extends Resource
             ->headerActions([
                 Action::make('sync_all_icals')
                     ->label('Sync All iCal')
-                    ->icon('heroicon-o-refresh')
+                    ->icon('heroicon-o-arrow-path') // ganti icon yang tersedia
                     ->requiresConfirmation()
                     ->action(function () {
                         // jalankan command sync tanpa unit_id untuk sync semua unit

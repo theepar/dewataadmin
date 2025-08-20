@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             VillaSeeder::class,
             WebApiKeySeeder::class,
+            VillaUnitSeeder::class,
         ]);
     }
 }
