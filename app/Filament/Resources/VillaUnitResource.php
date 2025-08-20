@@ -62,26 +62,25 @@ class VillaUnitResource extends Resource
                 TextColumn::make('ical_link')->label('iCal Link')->copyable()->limit(40),
                 TextColumn::make('last_synced_at')->label('Last Synced At')->dateTime()->sortable(),
             ])
+            ->headerActions([
+                Action::make('sync_all_icals')
+                    ->label('Sync All iCal')
+                    ->icon('heroicon-o-refresh')
+                    ->requiresConfirmation()
+                    ->action(function () {
+                        // jalankan command sync tanpa unit_id untuk sync semua unit
+                        Artisan::call('ical:sync');
+                        Notification::make()
+                            ->title('Sync selesai')
+                            ->success()
+                            ->body('Sync iCal semua unit sudah dijalankan.')
+                            ->send();
+                    }),
+            ])
             ->filters([
                 //
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-                Action::make('sync_ical')
-                    ->label('Sync iCal')
-                    ->icon('heroicon-o-arrow-path')
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        Artisan::call('ical:sync', [
-                            'unit_id' => $record->id,
-                        ]);
-                        Notification::make()
-                            ->title('Sync selesai')
-                            ->success()
-                            ->body('Sync iCal sudah dijalankan via command.')
-                            ->send();
-                    }),
                 Action::make('preview_ical')
                     ->label('Preview iCal')
                     ->icon('heroicon-o-eye')

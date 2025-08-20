@@ -19,7 +19,6 @@ class AuthController extends Controller
         $request->validate([
             'email'       => 'required|email',
             'password'    => 'required',
-            'device_name' => 'required',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -29,10 +28,6 @@ class AuthController extends Controller
                 'email' => ['Kredensial yang diberikan tidak cocok dengan catatan kami.'],
             ]);
         }
-
-        // Hapus token lama untuk device yang sama
-        // hapus token dengan nama device yang sama (jika ada)
-        $user->tokens()->where('name', $request->device_name)->delete();
 
         // Buat token baru
         $token = $user->createToken($request->device_name)->plainTextToken;

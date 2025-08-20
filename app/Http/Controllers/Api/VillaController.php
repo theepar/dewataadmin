@@ -154,20 +154,17 @@ class VillaController extends Controller
 
     public function getOccupancy(Request $request)
     {
-        // Validasi permintaan
         $request->validate([
             'year' => 'required|integer',
             'month' => 'required|integer|between:1,12',
         ]);
 
-        $year = $request->input('year');
-        $month = $request->input('month');
+        $year = (int) $request->input('year');
+        $month = (int) $request->input('month');
 
-        // Tentukan rentang tanggal untuk bulan yang dipilih
         $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfDay();
-        $endOfMonth = $startOfMonth->copy()->endOfMonth()->startOfDay();
+        $endOfMonth = $startOfMonth->copy()->endOfMonth()->endOfDay();
 
-        // Hitung total malam unit yang tersedia
         $totalUnits = VillaUnit::count();
         $daysInMonth = $startOfMonth->daysInMonth;
         $totalAvailableNights = $totalUnits * $daysInMonth;
@@ -179,37 +176,79 @@ class VillaController extends Controller
             ], 404);
         }
 
-        // Hitung total malam unit yang terisi
-        $totalOccupiedNights = 0;
+        // Ambil semua events yang overlap bulan ini
+        $events = IcalEvent::where('start_date', '<=', $endOfMonth)
+            ->where('end_date', '>=', $startOfMonth)
+            ->get();
 
-        // Ambil semua event yang overlap dengan bulan yang dipilih
-        $events = IcalEvent::where(function ($query) use ($startOfMonth, $endOfMonth) {
-            $query->where('start_date', '<=', $endOfMonth)
-                ->where('end_date', '>=', $startOfMonth);
-        })->get();
+        // Siapkan map untuk menghitung booked nights per unit
+        $unitIds = VillaUnit::pluck('id')->toArray();
+        $bookedNightsPerUnit = array_fill_keys($unitIds, 0);
 
         foreach ($events as $event) {
-            $eventStartDate = Carbon::parse($event->start_date);
-            $eventEndDate = Carbon::parse($event->end_date);
+            // abaikan event tanpa villa_unit_id
+            if (empty($event->villa_unit_id) || ! in_array($event->villa_unit_id, $unitIds)) {
+                continue;
+            }
 
-            // Tentukan rentang hari yang overlap antara event dan bulan
-            $overlapStart = $eventStartDate->greaterThan($startOfMonth) ? $eventStartDate : $startOfMonth;
-            $overlapEnd = $eventEndDate->lessThan($endOfMonth) ? $eventEndDate : $endOfMonth;
+            $eventStart = Carbon::parse($event->start_date);
+            $eventEnd = Carbon::parse($event->end_date);
 
-            $totalOccupiedNights += CarbonPeriod::create($overlapStart, $overlapEnd)->count() - 1;
+            $overlapStart = $eventStart->greaterThan($startOfMonth) ? $eventStart : $startOfMonth;
+            $overlapEnd = $eventEnd->lessThan($endOfMonth) ? $eventEnd : $endOfMonth;
+
+            // jumlah malam overlap (difference in days)
+            $nights = CarbonPeriod::create($overlapStart->startOfDay(), $overlapEnd->startOfDay())->count() - 1;
+            $nights = max(0, (int) $nights);
+
+            // jangan lebih dari daysInMonth
+            $bookedNightsPerUnit[$event->villa_unit_id] += min($nights, $daysInMonth);
         }
 
-        // Hitung persentase okupansi
-        $occupancyRate = ($totalOccupiedNights / $totalAvailableNights) * 100;
+        // Hitung available nights per unit dan summary per-bulan
+        $totalAvailableRoomNights = 0;
+        $fullyBookedUnits = 0;
+        $unitsWithSomeAvailability = 0;
+        $perUnitSummary = [];
 
-        // Kembalikan data dalam format JSON
+        foreach ($bookedNightsPerUnit as $unitId => $bookedNights) {
+            $bookedNights = min($bookedNights, $daysInMonth);
+            $availableNights = max(0, $daysInMonth - $bookedNights);
+
+            if ($availableNights === 0) {
+                $fullyBookedUnits++;
+            } else {
+                $unitsWithSomeAvailability++;
+            }
+
+            $totalAvailableRoomNights += $availableNights;
+
+            $perUnitSummary[] = [
+                'unit_id' => $unitId,
+                'booked_nights' => $bookedNights,
+                'available_nights' => $availableNights,
+            ];
+        }
+
+        $occupancyRate = $totalAvailableNights > 0
+            ? round((($totalAvailableNights - $totalAvailableRoomNights) / $totalAvailableNights) * 100, 2)
+            : 0;
+
         return response()->json([
             'success' => true,
             'year' => $year,
             'month' => $month,
+            'total_units' => $totalUnits,
+            'days_in_month' => $daysInMonth,
             'total_available_nights' => $totalAvailableNights,
-            'total_occupied_nights' => $totalOccupiedNights,
-            'occupancy_rate' => round($occupancyRate, 2)
+            'total_occupied_nights' => $totalAvailableNights - $totalAvailableRoomNights,
+            'occupancy_rate_percent' => $occupancyRate,
+
+            'total_available_room_nights' => $totalAvailableRoomNights,
+            'average_available_per_day' => round($totalAvailableRoomNights / $daysInMonth, 2),
+            'fully_booked_units_count' => $fullyBookedUnits,
+            'available_units_month' => $unitsWithSomeAvailability,
+            'per_unit_summary' => $perUnitSummary,
         ]);
     }
 }
