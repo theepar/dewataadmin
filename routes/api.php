@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 // --- Public Routes ---
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/ical/sync', [VillaController::class, 'syncIcal']);
 
 // Website API Key Protected Routes
 Route::middleware('website.api')->prefix('website')->group(function () {
@@ -39,5 +40,3 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/occupancy', [VillaController::class, 'getOccupancy']);
 });
-
-Route::post('/ical/sync', [VillaController::class, 'syncIcal']);

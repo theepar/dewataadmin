@@ -183,7 +183,7 @@ class VillaController extends Controller
 
     public function syncIcal(Request $request)
     {
-        $unitId = $request->input('unit_id'); // opsional, bisa null
+        $unitId = $request->input('unit_id');
         $exitCode = Artisan::call('ical:sync', $unitId ? ['unit_id' => $unitId] : []);
         $output = Artisan::output();
 
