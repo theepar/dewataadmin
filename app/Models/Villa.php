@@ -18,9 +18,8 @@ class Villa extends Model
         'bedroom',
         'bed',
         'bathroom',
-        'guest',         // Tambahkan field guest
+        'guest',
         'amenities',
-        // tambahkan field lain jika ada
     ];
 
     protected $casts = [
@@ -41,5 +40,17 @@ class Villa extends Model
     public function units()
     {
         return $this->hasMany(\App\Models\VillaUnit::class, 'villa_id');
+    }
+
+    public function icalEvents()
+    {
+        return $this->hasManyThrough(
+            \App\Models\IcalEvent::class,
+            \App\Models\VillaUnit::class,
+            'villa_id',
+            'villa_unit_id',
+            'id',
+            'id'
+        );
     }
 }

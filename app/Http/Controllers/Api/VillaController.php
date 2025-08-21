@@ -27,9 +27,9 @@ class VillaController extends Controller
         }
 
         if ($user->hasRole('admin')) {
-            $villas = Villa::with(['media', 'units'])->get();
+            $villas = Villa::with(['media', 'units', 'icalEvents'])->get();
         } else {
-            $villas = $user->villas()->with(['media', 'units'])->get();
+            $villas = $user->villas()->with(['media', 'units', 'icalEvents'])->get();
         }
 
         return response()->json([
@@ -56,17 +56,17 @@ class VillaController extends Controller
 
         // Ambil dengan relasi sesuai peran
         if ($user->hasRole('admin')) {
-            $villa = Villa::with(['media', 'units', 'events'])->find($id);
+            $villa = Villa::with(['media', 'units', 'icalEvents'])->find($id);
         } elseif ($user->hasRole('pegawai')) {
             // Ambil dari relasi villa_user (hanya villa yang terkait dengan pegawai)
-            $villa = $user->villas()->with(['media', 'units', 'events'])->where('villas.id', $id)->first();
+            $villa = $user->villas()->with(['media', 'units', 'icalEvents'])->where('villas.id', $id)->first();
 
             if (! $villa) {
                 return response()->json(['message' => 'Forbidden: You do not manage this villa.'], 403);
             }
         } else {
             // Untuk role lain, default ambil dari relasi user->villas juga (ubah sesuai kebutuhan)
-            $villa = $user->villas()->with(['media', 'units', 'events'])->where('villas.id', $id)->first();
+            $villa = $user->villas()->with(['media', 'units', 'icalEvents'])->where('villas.id', $id)->first();
 
             if (! $villa) {
                 return response()->json(['message' => 'Forbidden: You do not have access to this villa.'], 403);

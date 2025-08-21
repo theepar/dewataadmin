@@ -9,12 +9,12 @@ class WebsiteVillaController extends Controller
 {
     public function index()
     {
-        return Villa::with(['media', 'units', 'events'])->get();
+        return Villa::with(['media', 'units', 'icalEvents'])->get();
     }
 
     public function show($id)
     {
-        $villa = Villa::with(['media', 'units', 'events'])->find($id);
+        $villa = Villa::with(['media', 'units', 'icalEvents'])->find($id);
         if (! $villa) {
             return response()->json(['message' => 'Villa not found'], 404);
         }
