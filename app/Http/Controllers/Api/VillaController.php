@@ -8,7 +8,6 @@ use App\Models\VillaUnit;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 
@@ -178,18 +177,6 @@ class VillaController extends Controller
             'fully_booked_units_count' => $fullyBookedUnits,
             'available_units_month' => $unitsWithSomeAvailability,
             'per_unit_summary' => $perUnitSummary,
-        ]);
-    }
-
-    public function syncIcal(Request $request)
-    {
-        $unitId = $request->input('unit_id');
-        $exitCode = Artisan::call('ical:sync', $unitId ? ['unit_id' => $unitId] : []);
-        $output = Artisan::output();
-
-        return response()->json([
-            'success' => $exitCode === 0,
-            'output' => $output,
         ]);
     }
 }

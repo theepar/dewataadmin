@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 // --- Public Routes ---
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/ical/sync', [VillaController::class, 'syncIcal']);
+Route::post('/ical/sync', [WebsiteVillaController::class, 'syncIcal']);
 
 // Website API Key Protected Routes
 Route::middleware('website.api')->prefix('website')->group(function () {
