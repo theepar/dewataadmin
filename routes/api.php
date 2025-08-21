@@ -39,3 +39,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/occupancy', [VillaController::class, 'getOccupancy']);
 });
+
+Route::post('/ical/sync', [VillaController::class, 'syncIcal']);

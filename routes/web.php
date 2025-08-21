@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Http\Middleware;
 
 use App\Http\Controllers\Api\VillaController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Models\Villa;
 use Illuminate\Support\Facades\Route;
 
 /*
