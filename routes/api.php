@@ -1,10 +1,11 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\VillaController;
 use App\Http\Controllers\Api\WebsiteVillaController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Route;
 // --- Public Routes ---
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/ical/sync', [WebsiteVillaController::class, 'syncIcal']);
+
+Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
 
 // Website API Key Protected Routes
 Route::middleware('website.api')->prefix('website')->group(function () {
