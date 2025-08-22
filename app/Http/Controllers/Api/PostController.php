@@ -35,7 +35,6 @@ class PostController extends Controller
         return response()->json($post, 201);
     }
 
-    // Update post
     public function update(Request $request, $id)
     {
         if (! $request->user() || ! $request->user()->hasRole('admin')) {
