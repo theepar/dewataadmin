@@ -11,13 +11,15 @@ class PostController extends Controller
     // List all posts
     public function index()
     {
-        return Post::orderByDesc('created_at')->get();
+        $posts = Post::orderByDesc('created_at')->get();
+        return response()->json(['data' => $posts]);
     }
 
     // Show single post
     public function show($id)
     {
-        return Post::findOrFail($id);
+        $post = Post::findOrFail($id);
+        return response()->json(['data' => $post]);
     }
 
     // Create new post
