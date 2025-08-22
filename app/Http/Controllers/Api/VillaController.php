@@ -93,7 +93,10 @@ class VillaController extends Controller
         $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfDay();
         $endOfMonth = $startOfMonth->copy()->endOfMonth()->endOfDay();
 
-        $totalUnits = VillaUnit::count();
+        // Ambil semua unit beserta villa dan harga
+        $units = VillaUnit::with('villa')->get();
+        $unitIds = $units->pluck('id')->toArray();
+        $totalUnits = count($unitIds);
         $daysInMonth = $startOfMonth->daysInMonth;
         $totalAvailableNights = $totalUnits * $daysInMonth;
 
@@ -110,11 +113,9 @@ class VillaController extends Controller
             ->get();
 
         // Siapkan map untuk menghitung booked nights per unit
-        $unitIds = VillaUnit::pluck('id')->toArray();
         $bookedNightsPerUnit = array_fill_keys($unitIds, 0);
 
         foreach ($events as $event) {
-            // abaikan event tanpa villa_unit_id
             if (empty($event->villa_unit_id) || ! in_array($event->villa_unit_id, $unitIds)) {
                 continue;
             }
@@ -125,22 +126,22 @@ class VillaController extends Controller
             $overlapStart = $eventStart->greaterThan($startOfMonth) ? $eventStart : $startOfMonth;
             $overlapEnd = $eventEnd->lessThan($endOfMonth) ? $eventEnd : $endOfMonth;
 
-            // jumlah malam overlap (difference in days)
             $nights = CarbonPeriod::create($overlapStart->startOfDay(), $overlapEnd->startOfDay())->count() - 1;
             $nights = max(0, (int) $nights);
 
-            // jangan lebih dari daysInMonth
             $bookedNightsPerUnit[$event->villa_unit_id] += min($nights, $daysInMonth);
         }
 
-        // Hitung available nights per unit dan summary per-bulan
         $totalAvailableRoomNights = 0;
         $fullyBookedUnits = 0;
         $unitsWithSomeAvailability = 0;
         $perUnitSummary = [];
+        $totalRevenueIdr = 0;
+        $totalPotentialRevenueIdr = 0;
 
-        foreach ($bookedNightsPerUnit as $unitId => $bookedNights) {
-            $bookedNights = min($bookedNights, $daysInMonth);
+        foreach ($units as $unit) {
+            $unitId = $unit->id;
+            $bookedNights = min($bookedNightsPerUnit[$unitId] ?? 0, $daysInMonth);
             $availableNights = max(0, $daysInMonth - $bookedNights);
 
             if ($availableNights === 0) {
@@ -151,10 +152,21 @@ class VillaController extends Controller
 
             $totalAvailableRoomNights += $availableNights;
 
+            $revenueIdr = $bookedNights > 0 ? $bookedNights * (int) $unit->price_idr : 0;
+            $totalRevenueIdr += $revenueIdr;
+
+            // Tambahkan potensi revenue
+            $totalPotentialRevenueIdr += $daysInMonth * (int) $unit->price_idr;
+
             $perUnitSummary[] = [
-                'unit_id' => $unitId,
+                'unit_id'      => $unitId,
+                'villa_id'     => $unit->villa_id,
+                'villa_name'   => $unit->villa ? $unit->villa->name : null,
+                'unit_name'    => $unit->name,
+                'price_idr'    => (int) $unit->price_idr,
                 'booked_nights' => $bookedNights,
                 'available_nights' => $availableNights,
+                'revenue_idr'  => $revenueIdr,
             ];
         }
 
@@ -171,11 +183,12 @@ class VillaController extends Controller
             'total_available_nights' => $totalAvailableNights,
             'total_occupied_nights' => $totalAvailableNights - $totalAvailableRoomNights,
             'occupancy_rate_percent' => $occupancyRate,
-
             'total_available_room_nights' => $totalAvailableRoomNights,
             'average_available_per_day' => round($totalAvailableRoomNights / $daysInMonth, 2),
             'fully_booked_units_count' => $fullyBookedUnits,
             'available_units_month' => $unitsWithSomeAvailability,
+            'total_revenue_idr' => $totalRevenueIdr,
+            'total_potential_revenue_idr' => $totalPotentialRevenueIdr,
             'per_unit_summary' => $perUnitSummary,
         ]);
     }
