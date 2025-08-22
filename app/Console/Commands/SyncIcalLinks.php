@@ -20,6 +20,9 @@ class SyncIcalLinks extends Command
         })->get();
 
         foreach ($links as $record) {
+            // Ambil nama villa dari relasi
+            $villaName = $record->villa ? $record->villa->name : null;
+
             $icalUrl = $record->ical_link;
             if (empty($icalUrl)) {
                 $this->warn("Unit ID {$record->id} tidak punya iCal URL, di-skip.");
@@ -93,7 +96,13 @@ class SyncIcalLinks extends Command
             }
             $record->last_synced_at = now()->setTimezone('Asia/Makassar');
             $record->save();
-            $this->info("[{$record->name}] Sync selesai: $inserted event baru, $updated event diupdate.");
+            $this->info(json_encode([
+                'unit_id'    => $record->id,
+                'villa_name' => $villaName,
+                'inserted'   => $inserted,
+                'updated'    => $updated,
+                'synced_at'  => now()->setTimezone('Asia/Makassar')->toDateTimeString() . ' WITA',
+            ]));
         }
         return 0;
     }

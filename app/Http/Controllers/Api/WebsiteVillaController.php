@@ -28,26 +28,30 @@ class WebsiteVillaController extends Controller
     {
         $unitId = $request->input('unit_id');
         $exitCode = Artisan::call('ical:sync', $unitId ? ['unit_id' => $unitId] : []);
-        $output = Artisan::output();
+        $outputRaw = Artisan::output();
+
+        // Parse output menjadi array
+        $outputLines = explode("\n", trim($outputRaw));
+        $output = [];
+        foreach ($outputLines as $line) {
+            $line = trim($line);
+            if ($line) {
+                $json = json_decode($line, true);
+                if ($json) {
+                    $output[] = $json;
+                }
+            }
+        }
 
         $eventsQuery = \App\Models\IcalEvent::query();
         if ($unitId) {
             $eventsQuery->where('villa_unit_id', $unitId);
         }
-        $allEvents = $eventsQuery->get()->map(function ($event) {
-            return [
-                'id' => $event->id,
-                'villa_unit_id' => $event->villa_unit_id,
-                'uid' => $event->uid,
-                'summary' => $event->summary,
-                'start_date' => $event->start_date,
-                'end_date' => $event->end_date,
-            ];
-        });
+        $allEvents = $eventsQuery->get();
 
         return response()->json([
             'success' => $exitCode === 0,
-            'output' => $output, // sudah berisi detail per unit dari command
+            'output' => $output, // array per unit, lengkap dengan waktu
             'ical_events' => $allEvents,
             'synced_at' => Carbon::now('Asia/Makassar')->toDateTimeString() . ' WITA',
         ]);
