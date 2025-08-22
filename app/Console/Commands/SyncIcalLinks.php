@@ -84,9 +84,11 @@ class SyncIcalLinks extends Command
                 ];
                 $existing = IcalEvent::where($where)->first();
                 if ($existing) {
-                    $existing->update($data); // update jika sudah ada
+                    $existing->update($data);
+                    $updated++;
                 } else {
-                    IcalEvent::create(array_merge($where, $data)); // insert jika belum ada
+                    IcalEvent::create(array_merge($where, $data));
+                    $inserted++;
                 }
             }
             $record->last_synced_at = now()->setTimezone('Asia/Makassar');
