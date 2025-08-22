@@ -141,7 +141,31 @@ class VillaController extends Controller
 
         foreach ($units as $unit) {
             $unitId = $unit->id;
-            $bookedNights = min($bookedNightsPerUnit[$unitId] ?? 0, $daysInMonth);
+            $villa = $unit->villa;
+            $pricePerDay = $villa ? ((int) $villa->price_idr / 30) : 0;
+
+            // Ambil semua event untuk unit ini di bulan itu
+            $unitEvents = $events->where('villa_unit_id', $unitId);
+
+            $unitRevenueIdr = 0;
+            $bookedNights = 0;
+
+            foreach ($unitEvents as $event) {
+                $eventStart = Carbon::parse($event->start_date)->startOfDay();
+                $eventEnd = Carbon::parse($event->end_date)->startOfDay();
+
+                // Hitung overlap dengan bulan ini
+                $overlapStart = $eventStart->greaterThan($startOfMonth) ? $eventStart : $startOfMonth;
+                $overlapEnd = $eventEnd->lessThan($endOfMonth) ? $eventEnd : $endOfMonth;
+
+                $daysBooked = CarbonPeriod::create($overlapStart, $overlapEnd)->count() - 1;
+                $daysBooked = max(0, $daysBooked);
+
+                $bookedNights += $daysBooked;
+                $unitRevenueIdr += $daysBooked * $pricePerDay;
+            }
+
+            $bookedNights = min($bookedNights, $daysInMonth);
             $availableNights = max(0, $daysInMonth - $bookedNights);
 
             if ($availableNights === 0) {
@@ -151,22 +175,21 @@ class VillaController extends Controller
             }
 
             $totalAvailableRoomNights += $availableNights;
+            $totalRevenueIdr += $unitRevenueIdr;
 
-            $revenueIdr = $bookedNights > 0 ? $bookedNights * (int) $unit->price_idr : 0;
-            $totalRevenueIdr += $revenueIdr;
-
-            // Tambahkan potensi revenue
-            $totalPotentialRevenueIdr += $daysInMonth * (int) $unit->price_idr;
+            // Potensi revenue: harga per hari x hari x jumlah unit
+            $totalPotentialRevenueIdr += $daysInMonth * $pricePerDay;
 
             $perUnitSummary[] = [
                 'unit_id'      => $unitId,
                 'villa_id'     => $unit->villa_id,
-                'villa_name'   => $unit->villa ? $unit->villa->name : null,
+                'villa_name'   => $villa ? $villa->name : null,
                 'unit_name'    => $unit->name,
-                'price_idr'    => (int) $unit->price_idr,
+                'price_idr'    => (int) ($villa ? $villa->price_idr : 0),
+                'price_per_day' => $pricePerDay,
                 'booked_nights' => $bookedNights,
                 'available_nights' => $availableNights,
-                'revenue_idr'  => $revenueIdr,
+                'revenue_idr'  => $unitRevenueIdr,
             ];
         }
 
