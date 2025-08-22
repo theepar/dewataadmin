@@ -142,7 +142,7 @@ class VillaController extends Controller
         foreach ($units as $unit) {
             $unitId = $unit->id;
             $villa = $unit->villa;
-            $pricePerDay = $villa ? ((int) $villa->price_idr / 30) : 0;
+            $pricePerDay = $villa ? ceil((int) $villa->price_idr / 30) : 0;
 
             // Ambil semua event untuk unit ini di bulan itu
             $unitEvents = $events->where('villa_unit_id', $unitId);
@@ -162,7 +162,7 @@ class VillaController extends Controller
                 $daysBooked = max(0, $daysBooked);
 
                 $bookedNights += $daysBooked;
-                $unitRevenueIdr += $daysBooked * $pricePerDay;
+                $unitRevenueIdr += ceil($daysBooked * $pricePerDay);
             }
 
             $bookedNights = min($bookedNights, $daysInMonth);
@@ -176,9 +176,7 @@ class VillaController extends Controller
 
             $totalAvailableRoomNights += $availableNights;
             $totalRevenueIdr += $unitRevenueIdr;
-
-            // Potensi revenue: harga per hari x hari x jumlah unit
-            $totalPotentialRevenueIdr += $daysInMonth * $pricePerDay;
+            $totalPotentialRevenueIdr += ceil($daysInMonth * $pricePerDay);
 
             $perUnitSummary[] = [
                 'unit_id'      => $unitId,
@@ -207,12 +205,16 @@ class VillaController extends Controller
             'total_occupied_nights' => $totalAvailableNights - $totalAvailableRoomNights,
             'occupancy_rate_percent' => $occupancyRate,
             'total_available_room_nights' => $totalAvailableRoomNights,
-            'average_available_per_day' => round($totalAvailableRoomNights / $daysInMonth, 2),
+            'average_available_per_day' => ceil($totalAvailableRoomNights / $daysInMonth),
             'fully_booked_units_count' => $fullyBookedUnits,
             'available_units_month' => $unitsWithSomeAvailability,
-            'total_revenue_idr' => $totalRevenueIdr,
-            'total_potential_revenue_idr' => $totalPotentialRevenueIdr,
-            'per_unit_summary' => $perUnitSummary,
+            'total_revenue_idr' => ceil($totalRevenueIdr),
+            'total_potential_revenue_idr' => ceil($totalPotentialRevenueIdr),
+            'per_unit_summary' => collect($perUnitSummary)->map(function ($item) {
+                $item['price_per_day'] = ceil($item['price_per_day']);
+                $item['revenue_idr'] = ceil($item['revenue_idr']);
+                return $item;
+            }),
         ]);
     }
 }
