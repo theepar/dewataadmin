@@ -40,6 +40,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/villas', [VillaController::class, 'index']);
     Route::get('/villas/{id}', [VillaController::class, 'show']);
-
     Route::get('/occupancy', [VillaController::class, 'getOccupancy']);
+
+    // CRUD routes for PostController
+    Route::get('/posts', [\App\Http\Controllers\Api\PostController::class, 'index']);
+    Route::get('/posts/{id}', [\App\Http\Controllers\Api\PostController::class, 'show']);
+    Route::post('/posts', [\App\Http\Controllers\Api\PostController::class, 'store']);
+    Route::put('/posts/{id}', [\App\Http\Controllers\Api\PostController::class, 'update']);
+    Route::delete('/posts/{id}', [\App\Http\Controllers\Api\PostController::class, 'destroy']);
 });
