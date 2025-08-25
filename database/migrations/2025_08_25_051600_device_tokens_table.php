@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('device_tokens', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->string('fcm_token')->nullable()->unique(); // [nullable]
+            $table->string('fcm_token')->nullable(); // [nullable]
             $table->string('device_name')->nullable();
+            $table->unique(['user_id', 'device_name']); // hanya ini yang unique
             $table->timestamps();
         });
     }
