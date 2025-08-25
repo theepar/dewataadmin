@@ -38,10 +38,8 @@ class AuthController extends Controller
 
         // [UPDATE FCM TOKEN JIKA ADA]
         if ($request->filled('fcm_token')) {
-            $user->fcm_token = $request->input('fcm_token');
-            $user->save();
 
-            // Simpan juga ke tabel device_tokens (multi device support)
+            // Simpan ke tabel device_tokens saja
             \App\Models\DeviceToken::updateOrCreate(
                 [
                     'user_id' => $user->id,
@@ -51,6 +49,14 @@ class AuthController extends Controller
                     'fcm_token' => $request->fcm_token,
                 ]
             );
+
+            // Ambil device name dari token yang baru dibuat
+            $realDeviceName = $user->currentAccessToken()->name ?? $request->device_name;
+
+            // Update device_name di tabel device_tokens agar selalu sesuai dengan token
+            \App\Models\DeviceToken::where('user_id', $user->id)
+                ->where('fcm_token', $request->fcm_token)
+                ->update(['device_name' => $realDeviceName]);
         }
 
         // Ambil device name dari token jika ada
