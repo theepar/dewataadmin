@@ -42,6 +42,12 @@ class LoginHistoryResource extends Resource
             ->columns([
                 TextColumn::make('ip_address')->label('IP Address'),
                 TextColumn::make('user_agent')->label('Device'),
+                TextColumn::make('device_name')
+                    ->label('Device Name')
+                    ->getStateUsing(function ($record) {
+                        return $record->device_name
+                            ?: ($record->user_agent ? 'Browser' : '-');
+                    }),
                 TextColumn::make('logged_in_at')
                     ->label('Login Time')
                     ->dateTime('M d, Y H:i:s')

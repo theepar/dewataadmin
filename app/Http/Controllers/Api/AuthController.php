@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -19,6 +20,8 @@ class AuthController extends Controller
         $request->validate([
             'email'       => 'required|email',
             'password'    => 'required',
+            'device_name' => 'required|string', // [WAJIBKAN device_name]
+            'fcm_token'   => 'nullable|string', // [OPSIONAL fcm_token]
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -31,7 +34,34 @@ class AuthController extends Controller
 
         // Buat token baru
         $token = $user->createToken($request->device_name)->plainTextToken;
-        $role  = $user->roles->pluck('name')->first(); // Ambil role utama user
+        $role  = $user->roles->pluck('name')->first();
+
+        // [UPDATE FCM TOKEN JIKA ADA]
+        if ($request->filled('fcm_token')) {
+            $user->fcm_token = $request->input('fcm_token');
+            $user->save();
+
+            // Simpan juga ke tabel device_tokens (multi device support)
+            \App\Models\DeviceToken::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'device_name' => $request->device_name,
+                ],
+                [
+                    'fcm_token' => $request->fcm_token,
+                ]
+            );
+        }
+
+        // Tambahkan log login history
+        \App\Models\LoginHistory::create([
+            'user_id'     => $user->id,
+            'ip_address'  => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+            'device_name' => $request->device_name ?? null,
+            'logged_in_at' => now(),
+            // 'device_token_id' => ...jika ingin relasi ke device token
+        ]);
 
         return response()->json([
             'message'      => 'Login berhasil!',
@@ -46,10 +76,22 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // hanya hapus token yang sedang dipakai (lebih aman)
-        $current = $request->user()->currentAccessToken();
+        $user = $request->user();
+        $deviceName = $request->input('device_name');
+        $fcmToken = $request->input('fcm_token');
+
+        // Hapus token akses
+        $current = $user->currentAccessToken();
         if ($current) {
             $current->delete();
+        }
+
+        // Hapus device token jika ada
+        if ($deviceName && $fcmToken) {
+            \App\Models\DeviceToken::where('user_id', $user->id)
+                ->where('fcm_token', $fcmToken)
+                ->where('device_name', $deviceName)
+                ->delete();
         }
 
         return response()->json(['message' => 'Logout berhasil!']);
@@ -81,11 +123,46 @@ class AuthController extends Controller
 
         $token = $user->createToken($request->device_name)->plainTextToken;
 
+        // Setelah createToken di register
+        if ($request->filled('fcm_token')) {
+            \App\Models\DeviceToken::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'device_name' => $request->device_name,
+                ],
+                [
+                    'fcm_token' => $request->fcm_token,
+                ]
+            );
+        }
+
         return response()->json([
             'message'      => 'Registrasi berhasil!',
             'user'         => $user->only(['id', 'name', 'email']),
             'access_token' => $token,
             'roles'        => $user->getRoleNames(),
         ], 201);
+    }
+
+    public function updateFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+            'device_name' => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+
+        \App\Models\DeviceToken::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'device_name' => $request->device_name,
+            ],
+            [
+                'fcm_token' => $request->fcm_token,
+            ]
+        );
+
+        return response()->json(['success' => true]);
     }
 }

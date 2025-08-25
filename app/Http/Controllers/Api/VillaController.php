@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use Carbon\Carbon;
 use App\Models\Villa;
+use Carbon\CarbonPeriod;
 use App\Models\IcalEvent;
 use App\Models\VillaUnit;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
-use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\NewBookingNotification;
 
 class VillaController extends Controller
 {
@@ -226,6 +228,7 @@ class VillaController extends Controller
         }
 
         $villaId = $request->input('villa_id');
+        $filter = $request->input('filter', 'all'); // default: all
 
         // Ambil villa sesuai role
         if ($user->hasRole('admin')) {
@@ -241,13 +244,39 @@ class VillaController extends Controller
         }
 
         $unitIds = $villaUnits->pluck('id')->toArray();
+        $today = Carbon::today();
 
-        // Ambil semua events terbaru (misal, 1 bulan terakhir)
-        $since = Carbon::now()->subMonth();
-        $latestEvents = IcalEvent::whereIn('villa_unit_id', $unitIds)
-            ->where('created_at', '>=', $since)
-            ->orderByDesc('created_at')
-            ->get();
+        // Ambil event yang diperbarui hari ini
+        $query = IcalEvent::whereIn('villa_unit_id', $unitIds)
+            ->whereDate('created_at', $today);
+
+        // Filter berdasarkan jadwal booking
+        if ($filter === 'day') {
+            $query->whereDate('start_date', $today);
+        } elseif ($filter === 'week') {
+            $query->whereBetween('start_date', [$today, $today->copy()->addDays(6)->endOfDay()]);
+        } elseif ($filter === 'month') {
+            $query->whereBetween('start_date', [$today, $today->copy()->addDays(29)->endOfDay()]);
+        }
+        // 'all' tidak perlu filter jadwal, ambil semua event yang diperbarui hari ini
+
+        $latestEvents = $query->orderByDesc('created_at')->get();
+
+        // Kirim push notification ke semua device yang ada di database
+        if ($latestEvents->count() > 0) {
+            $latestEvent = $latestEvents->first(); // Ambil event terbaru
+            $deviceTokens = \App\Models\DeviceToken::whereNotNull('fcm_token')
+                ->pluck('fcm_token')
+                ->filter()
+                ->unique();
+
+            foreach ($deviceTokens as $fcmToken) {
+                if (!empty($fcmToken)) {
+                    Notification::route('fcm', $fcmToken)
+                        ->notify(new NewBookingNotification($latestEvent));
+                }
+            }
+        }
 
         $notification = [
             'message' => $latestEvents->count() > 0 ? 'Ada booking baru atau data terupdate!' : 'Tidak ada booking baru atau update.',

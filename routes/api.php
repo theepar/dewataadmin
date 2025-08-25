@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Endpoint notifikasi
     Route::get('/notification', [VillaController::class, 'notification']);
+    Route::post('/update-fcm-token', [AuthController::class, 'updateFcmToken']);
 
     // CRUD routes for PostController
     Route::get('/posts', [\App\Http\Controllers\Api\PostController::class, 'index']);

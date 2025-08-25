@@ -6,6 +6,14 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 
 ## Fitur Utama
 
+- **Multi Device Login & Notifikasi**
+  - User dapat login di banyak device (mobile dan browser) secara bersamaan.
+  - Setiap device menyimpan token akses dan FCM token unik di database.
+  - Push notifikasi FCM otomatis ke semua device user jika ada booking baru atau update event.
+  - Device name dan FCM token dapat diupdate/dihapus per device (logout, update token).
+  - Login dari browser otomatis terdeteksi sebagai "Browser", login dari mobile terdeteksi dari device name.
+  - History login mencatat asal login (device name, IP, user agent, waktu login).
+
 - **Manajemen Villa**
   - CRUD data villa: nama, harga, status kepemilikan, deskripsi, gambar, galeri, video.
   - Info kamar: jumlah bedroom, bed, bathroom.
@@ -37,10 +45,12 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
   - Data villa, event, dan link iCal bisa diakses sesuai role dan API key.
   - **Endpoint unit villa:** Data unit villa dan link iCal per unit tersedia di API.
 - **Notifikasi**
-  - Integrasi dengan Firebase Cloud Messaging untuk push notifikasi ke aplikasi mobile.
+  - Integrasi dengan Firebase Cloud Messaging untuk push notifikasi ke aplikasi mobile dan multi device.
+  - Isi notifikasi (title, body, tanggal update) diambil langsung dari event booking terbaru.
 - **History Login**
-  - Setiap login user tercatat di tabel `login_histories` (IP, device, waktu login).
+  - Setiap login user tercatat di tabel `login_histories` (IP, device name, user agent, waktu login).
   - History login hanya bisa dilihat oleh user sendiri di dashboard.
+  - Data login history lengkap, bisa membedakan login dari browser atau mobile.
 - **Website API Key Management**
   - Admin dapat generate API key unik untuk tiap website frontend.
   - API key diverifikasi di backend sebelum mengirim data villa.
