@@ -30,7 +30,10 @@ class VillaUnitResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-link';
     protected static ?string $navigationGroup = 'Properti';
 
-
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasRole('admin');
+    }
 
     public static function form(Form $form): Form
     {
@@ -146,15 +149,4 @@ class VillaUnitResource extends Resource
     {
         return false;
     }
-
-    public static function canViewAny(): bool
-
-    {
-
-        return auth()->user()?->hasRole('admin');
-
-    }
-
-
-
 }
