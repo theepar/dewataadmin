@@ -53,14 +53,17 @@ class AuthController extends Controller
             );
         }
 
+        // Ambil device name dari token jika ada
+        $deviceName = $request->device_name
+            ?? ($user->currentAccessToken()->name ?? null);
+
         // Tambahkan log login history
         \App\Models\LoginHistory::create([
             'user_id'     => $user->id,
             'ip_address'  => $request->ip(),
             'user_agent'  => $request->userAgent(),
-            'device_name' => $request->device_name ?? null,
+            'device_name' => $deviceName,
             'logged_in_at' => now(),
-            // 'device_token_id' => ...jika ingin relasi ke device token
         ]);
 
         return response()->json([
