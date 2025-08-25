@@ -70,7 +70,7 @@ class UserResource extends Resource
                 Action::make('sendResetPassword')
                     ->label('Kirim Link Reset Password')
                     ->icon('heroicon-o-envelope')
-                    ->visible(fn() => auth()->user()->hasRole('pegawai'))
+                    ->visible(fn() => auth()->user()->hasRole('user'))
                     ->action(function ($record) {
                         $status = Password::sendResetLink(['email' => $record->email]);
                         if ($status === Password::RESET_LINK_SENT) {

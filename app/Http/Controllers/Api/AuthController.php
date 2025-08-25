@@ -119,10 +119,10 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Assign default role 'pegawai'
-        $pegawaiRole = Role::where('name', 'pegawai')->first();
-        if ($pegawaiRole) {
-            $user->assignRole($pegawaiRole);
+        // Assign default role 'user'
+        $userRole = Role::where('name', 'user')->first();
+        if ($userRole) {
+            $user->assignRole($userRole);
         }
 
         // Buat personal access token

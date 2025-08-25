@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Providers;
 
 use App\Models\User;
@@ -15,7 +16,7 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         User::created(function (User $user) {
-            $user->assignRole('pegawai');
+            $user->assignRole('user');
         });
     }
 }

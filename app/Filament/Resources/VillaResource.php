@@ -119,12 +119,12 @@ class VillaResource extends Resource
                             ->formatStateUsing(fn($state, $record) => $record ? $record->units()->count() : 1),
 
                         Select::make('users')
-                            ->label('Pegawai yang bisa melihat villa ini')
+                            ->label('User yang bisa melihat villa ini')
                             ->multiple(false)
                             ->relationship('users', 'name')
                             ->searchable()
                             ->preload()
-                            ->helperText('Admin bisa melihat semua villa, pegawai hanya villa yang di-assign.'),
+                            ->helperText('Admin bisa melihat semua villa, User hanya villa yang di-assign.'),
                     ])->columns(2),
 
                 Section::make('Media Villa')

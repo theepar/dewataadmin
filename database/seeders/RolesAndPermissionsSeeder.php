@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -16,6 +17,6 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Buat Peran (Roles)
         Role::create(['name' => 'admin']);
-        Role::create(['name' => 'pegawai']);
+        Role::create(['name' => 'user']);
     }
 }

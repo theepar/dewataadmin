@@ -59,8 +59,8 @@ class VillaController extends Controller
         // Ambil dengan relasi sesuai peran
         if ($user->hasRole('admin')) {
             $villa = Villa::with(['media', 'units', 'icalEvents'])->find($id);
-        } elseif ($user->hasRole('pegawai')) {
-            // Ambil dari relasi villa_user (hanya villa yang terkait dengan pegawai)
+        } elseif ($user->hasRole('user')) {
+            // Ambil dari relasi villa_user (hanya villa yang terkait dengan user)
             $villa = $user->villas()->with(['media', 'units', 'icalEvents'])->where('villas.id', $id)->first();
 
             if (! $villa) {

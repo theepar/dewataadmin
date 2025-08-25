@@ -21,12 +21,12 @@ class UserSeeder extends Seeder
         ]);
         $admin->assignRole('admin');
 
-        // Membuat Akun Pegawai
-        $pegawai = User::create([
-            'name'     => 'Pegawai',
+        // Membuat Akun User
+        $user = User::create([
+            'name'     => 'Deva',
             'email'    => 'tepargun@gmail.com',
             'password' => Hash::make('password'),
         ]);
-        $pegawai->assignRole('pegawai');
+        $user->assignRole('user');
     }
 }

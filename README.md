@@ -18,12 +18,12 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
   - CRUD data villa: nama, harga, status kepemilikan, deskripsi, gambar, galeri, video.
   - Info kamar: jumlah bedroom, bed, bathroom.
   - Fasilitas (amenities): input/edit dinamis via repeater, tersimpan dalam format JSON.
-  - Relasi villa dengan media (gambar/video) dan pegawai (setiap villa hanya bisa dikelola satu pegawai, admin bisa akses semua).
+  - Relasi villa dengan media (gambar/video) dan user (setiap villa hanya bisa dikelola satu user, admin bisa akses semua).
   - **Manajemen Unit Villa:** Input jumlah unit villa langsung dari form, otomatis membuat/menghapus data unit di tabel `villa_units` sesuai input. Setiap unit villa dapat memiliki link iCal sendiri.
   - **Sinkronisasi jumlah unit:** Edit jumlah unit di villa resource akan otomatis menambah/menghapus unit di tabel `villa_units`.
 - **Manajemen User & Role**
-  - Otentikasi dan otorisasi berbasis peran (admin, pegawai) menggunakan Spatie Permission.
-  - Pegawai hanya bisa melihat dan mengelola villa miliknya sendiri.
+  - Otentikasi dan otorisasi berbasis peran (admin, user) menggunakan Spatie Permission.
+  - User hanya bisa melihat dan mengelola villa miliknya sendiri.
   - Admin bisa mengelola semua data.
 - **Sinkronisasi Kalender Airbnb**
   - Otomatis unduh dan proses file iCal (.ics) dari Airbnb.
@@ -60,14 +60,7 @@ Aplikasi backend berbasis Laravel untuk manajemen villa, booking, dan sinkronisa
 ## Struktur Database
 
 - **users**: Data user, role, otentikasi.
-- **villas**: Data villa (nama, harga, deskripsi, status, info kamar, amenities).
-- **villa_units**: Data unit per villa (relasi ke villa, nomor unit, link iCal per unit).
-- **villa_media**: Gambar/video villa, relasi ke villa.
-- **villa_user**: Relasi villa dengan user (pegawai).
-- **ical_links**: Link iCal Airbnb, relasi ke unit villa.
-- **ical_events**: Event booking dari iCal (summary, tanggal, status, tamu, dll).
-- **login_histories**: History login user (user_id, IP, device, waktu login).
-- **website_api_keys**: API key untuk website frontend (website_name, api_key).
+- **villa_user**: Relasi villa dengan user.
 
 ---
 
@@ -77,7 +70,7 @@ API sekarang disederhanakan: hanya ada endpoint untuk autentikasi (Auth) dan dat
 
 | Controller     | Endpoint                       | Keterangan |
 |----------------|--------------------------------|-----------|
-| AuthController | POST `/api/login`              | Login user (mobile/admin/pegawai) |
+| AuthController | POST `/api/login`              | Login user (mobile/admin/user) |
 |                | POST `/api/logout`             | Logout user |
 | VillaController| GET `/api/villas`              | Dapatkan daftar villa (mengembalikan relasi: units, media, ical_links, ical_events). Menggunakan autentikasi (Sanctum) atau header API key untuk website. |
 |                | GET `/api/villas/{id}`         | Detail villa lengkap (termasuk units, media, ical_links, ical_events). Menggunakan autentikasi (Sanctum) atau header API key untuk website. |
@@ -124,7 +117,6 @@ Catatan singkat:
 - Endpoint API tersedia di `http://localhost:8000/api`
 - Login dengan user yang sudah di-seed atau buat user baru melalui admin panel
 - Kelola villa, unit villa, user, media, amenities, dan API key website dari dashboard Filament
-- Website frontend dapat mengambil data villa dan unit dengan API key yang digenerate admin
 
 ---
 
