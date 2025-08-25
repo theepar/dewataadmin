@@ -42,16 +42,6 @@ class LoginHistoryResource extends Resource
             ->columns([
                 TextColumn::make('ip_address')->label('IP Address'),
                 TextColumn::make('user_agent')->label('Device'),
-                TextColumn::make('device_name')
-                    ->label('Device Name')
-                    ->getStateUsing(function ($record) {
-                        // Jika device_name ada dan bukan null/kosong, anggap sebagai Mobile
-                        if ($record->device_name && strtolower($record->device_name) !== 'browser') {
-                            return 'Mobile';
-                        }
-                        // Jika device_name kosong, fallback ke Browser
-                        return 'Browser';
-                    }),
                 TextColumn::make('logged_in_at')
                     ->label('Login Time')
                     ->dateTime('M d, Y H:i:s')
