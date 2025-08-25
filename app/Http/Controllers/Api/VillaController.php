@@ -217,4 +217,47 @@ class VillaController extends Controller
             }),
         ]);
     }
+
+    public function notification(Request $request)
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $villaId = $request->input('villa_id');
+
+        // Ambil villa sesuai role
+        if ($user->hasRole('admin')) {
+            $villaUnits = $villaId
+                ? VillaUnit::where('villa_id', $villaId)->get()
+                : VillaUnit::all();
+        } else {
+            $userVillaIds = $user->villas->pluck('id')->toArray();
+            if ($villaId && !in_array($villaId, $userVillaIds)) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+            $villaUnits = VillaUnit::whereIn('villa_id', $villaId ? [$villaId] : $userVillaIds)->get();
+        }
+
+        $unitIds = $villaUnits->pluck('id')->toArray();
+
+        // Ambil semua events terbaru (misal, 1 bulan terakhir)
+        $since = Carbon::now()->subMonth();
+        $latestEvents = IcalEvent::whereIn('villa_unit_id', $unitIds)
+            ->where('created_at', '>=', $since)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $notification = [
+            'message' => $latestEvents->count() > 0 ? 'Ada booking baru atau data terupdate!' : 'Tidak ada booking baru atau update.',
+            'new_events_count' => $latestEvents->count(),
+            'new_events' => $latestEvents->values(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'notification' => $notification,
+        ]);
+    }
 }

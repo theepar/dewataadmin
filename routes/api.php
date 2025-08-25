@@ -42,6 +42,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/villas/{id}', [VillaController::class, 'show']);
     Route::get('/occupancy', [VillaController::class, 'getOccupancy']);
 
+    // Endpoint notifikasi
+    Route::get('/notification', [VillaController::class, 'notification']);
+
     // CRUD routes for PostController
     Route::get('/posts', [\App\Http\Controllers\Api\PostController::class, 'index']);
     Route::get('/posts/{id}', [\App\Http\Controllers\Api\PostController::class, 'show']);
