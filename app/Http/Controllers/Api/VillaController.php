@@ -95,8 +95,19 @@ class VillaController extends Controller
         $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfDay();
         $endOfMonth = $startOfMonth->copy()->endOfMonth()->endOfDay();
 
-        // Ambil semua unit beserta villa dan harga
-        $units = VillaUnit::with('villa')->get();
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Ambil unit sesuai role
+        if ($user->hasRole('admin')) {
+            $units = VillaUnit::with('villa')->get();
+        } else {
+            $userVillaIds = $user->villas->pluck('id')->toArray();
+            $units = VillaUnit::with('villa')->whereIn('villa_id', $userVillaIds)->get();
+        }
+
         $unitIds = $units->pluck('id')->toArray();
         $totalUnits = count($unitIds);
         $daysInMonth = $startOfMonth->daysInMonth;
