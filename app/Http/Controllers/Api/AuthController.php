@@ -63,11 +63,19 @@ class AuthController extends Controller
         $deviceName = $request->device_name
             ?? ($user->currentAccessToken()->name ?? null);
 
+        // Cek apakah device_name ada di device_tokens (berarti dari mobile)
+        $deviceToken = \App\Models\DeviceToken::where('user_id', $user->id)
+            ->where('device_name', $deviceName)
+            ->first();
+
+        // Jika device_token ditemukan, user_agent diisi dengan device_name (mobile), jika tidak tetap pakai user agent asli
+        $userAgent = $deviceToken ? $deviceToken->device_name : $request->userAgent();
+
         // Tambahkan log login history
         \App\Models\LoginHistory::create([
             'user_id'     => $user->id,
             'ip_address'  => $request->ip(),
-            'user_agent'  => $request->userAgent(),
+            'user_agent'  => $userAgent,
             'device_name' => $deviceName,
             'logged_in_at' => now(),
         ]);
