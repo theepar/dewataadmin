@@ -37,14 +37,14 @@ class NewBookingNotification extends Notification
     public function toFcm($notifiable)
     {
         $title = $this->event->title ?? 'Booking Baru';
-        $body = $this->event->description ?? 'Ada booking baru atau data terupdate!';
-        $updatedAt = $this->event->updated_at ? $this->event->updated_at->format('Y-m-d H:i:s') : null;
+        $body = $this->event->description ?? 'Ada booking baru';
+        $createdAt = $this->event->created_at ? $this->event->created_at->format('Y-m-d H:i:s') : null;
 
         return FcmMessage::create()
             ->setData([
                 'type' => 'booking',
                 'event_id' => $this->event->id ?? null,
-                'updated_at' => $updatedAt, // Tanggal terakhir diupdate
+                'created_at' => $createdAt, // Tanggal event dibuat
             ])
             ->setNotification(
                 \NotificationChannels\Fcm\Resources\Notification::create()

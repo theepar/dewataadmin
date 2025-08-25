@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\NewBookingNotification;
+use Illuminate\Support\Facades\DB;
 
 class VillaController extends Controller
 {
@@ -239,57 +240,42 @@ class VillaController extends Controller
         }
 
         $villaId = $request->input('villa_id');
-        $filter = $request->input('filter', 'all'); // default: all
-
-        // Ambil villa sesuai role
-        if ($user->hasRole('admin')) {
-            $villaUnits = $villaId
-                ? VillaUnit::where('villa_id', $villaId)->get()
-                : VillaUnit::all();
-        } else {
-            $userVillaIds = $user->villas->pluck('id')->toArray();
-            if ($villaId && !in_array($villaId, $userVillaIds)) {
-                return response()->json(['message' => 'Forbidden'], 403);
-            }
-            $villaUnits = VillaUnit::whereIn('villa_id', $villaId ? [$villaId] : $userVillaIds)->get();
-        }
-
-        $unitIds = $villaUnits->pluck('id')->toArray();
         $today = Carbon::today();
 
-        // Ambil event yang diperbarui hari ini
-        $query = IcalEvent::whereIn('villa_unit_id', $unitIds);
+        // Ambil semua user_id yang punya akses ke villa ini (termasuk admin jika ada relasi)
+        $accessUserIds = DB::table('villa_user')
+            ->where('villa_id', $villaId)
+            ->pluck('user_id')
+            ->toArray();
 
-        // Filter berdasarkan jadwal booking
-        if ($filter === 'day') {
-            $query->whereDate('start_date', $today);
-        } elseif ($filter === 'week') {
-            $query->whereBetween('start_date', [$today, $today->copy()->addDays(6)->endOfDay()]);
-        } elseif ($filter === 'month') {
-            $query->whereBetween('start_date', [$today, $today->copy()->addDays(29)->endOfDay()]);
-        } else {
-            // 'all' ambil event yang dibuat hari ini
-            $query->whereDate('created_at', $today);
-        }
+        // Ambil semua unit di villa ini
+        $villaUnits = VillaUnit::where('villa_id', $villaId)->get();
+        $unitIds = $villaUnits->pluck('id')->toArray();
 
-        $latestEvents = $query->orderByDesc('created_at')->get();
+        // Ambil event yang dibuat hari ini untuk unit di villa ini
+        $latestEvents = IcalEvent::whereIn('villa_unit_id', $unitIds)
+            ->whereDate('created_at', $today)
+            ->orderByDesc('created_at')
+            ->get();
+
         if ($latestEvents->count() > 0) {
-            $latestEvent = $latestEvents->first(); // Ambil event terbaru
-            $deviceTokens = \App\Models\DeviceToken::whereNotNull('fcm_token')
-                ->pluck('fcm_token')
-                ->filter()
-                ->unique();
+            // 1. Ambil semua admin
+            $admins = \App\Models\User::whereHas('roles', function ($query) {
+                $query->where('name', 'admin');
+            })->get();
 
-            foreach ($deviceTokens as $fcmToken) {
-                if (!empty($fcmToken)) {
-                    Notification::route('fcm', $fcmToken)
-                        ->notify(new NewBookingNotification($latestEvent));
-                }
-            }
+            // 2. Ambil semua user yang terkait dengan villa ini (berdasarkan relasi villa_user)
+            $users = \App\Models\User::whereIn('id', $accessUserIds)->get();
+
+            // 3. Gabungkan semua user dan pastikan unik
+            $usersToNotify = $admins->merge($users)->unique('id');
+
+            // 4. Kirim notifikasi ke semua user yang relevan
+            Notification::send($usersToNotify, new NewBookingNotification($latestEvents->first()));
         }
 
         $notification = [
-            'message' => $latestEvents->count() > 0 ? 'Ada booking baru atau data terupdate!' : 'Tidak ada booking baru atau update.',
+            'message' => $latestEvents->count() > 0 ? 'Ada booking baru!' : 'Tidak ada booking baru.',
             'new_events_count' => $latestEvents->count(),
             'new_events' => $latestEvents->values(),
         ];

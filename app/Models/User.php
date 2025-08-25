@@ -52,4 +52,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(DeviceToken::class);
     }
+
+    // Jika multi device per user (misal dari tabel device_tokens):
+    public function routeNotificationForFcm()
+    {
+        return \App\Models\DeviceToken::where('user_id', $this->id)
+            ->whereNotNull('fcm_token')
+            ->pluck('fcm_token')
+            ->toArray();
+    }
 }
