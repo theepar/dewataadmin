@@ -259,30 +259,32 @@ class VillaController extends Controller
             ->get();
 
         if ($latestEvents->count() > 0) {
-            // 1. Ambil semua admin
+            // Ambil semua admin
             $admins = \App\Models\User::whereHas('roles', function ($query) {
                 $query->where('name', 'admin');
             })->get();
 
-            // 2. Ambil semua user yang terkait dengan villa ini (berdasarkan relasi villa_user)
+            // Ambil semua user yang terkait dengan villa ini
             $users = \App\Models\User::whereIn('id', $accessUserIds)->get();
 
-            // 3. Gabungkan semua user dan pastikan unik
+            // Gabungkan semua user dan pastikan unik
             $usersToNotify = $admins->merge($users)->unique('id');
 
-            // 4. Kirim notifikasi ke semua user yang relevan
+            // Kirim notifikasi ke semua user yang relevan
             Notification::send($usersToNotify, new NewBookingNotification($latestEvents->first()));
-        }
 
-        $notification = [
-            'message' => $latestEvents->count() > 0 ? 'Ada booking baru!' : 'Tidak ada booking baru.',
-            'new_events_count' => $latestEvents->count(),
-            'new_events' => $latestEvents->values(),
-        ];
+            $message = 'Ada booking baru!';
+        } else {
+            $message = 'Tidak ada booking baru.';
+        }
 
         return response()->json([
             'success' => true,
-            'notification' => $notification,
+            'notification' => [
+                'message' => $message,
+                'new_events_count' => $latestEvents->count(),
+                'new_events' => $latestEvents->values(),
+            ],
         ]);
     }
 }
