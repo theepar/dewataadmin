@@ -258,8 +258,7 @@ class VillaController extends Controller
         $today = Carbon::today();
 
         // Ambil event yang diperbarui hari ini
-        $query = IcalEvent::whereIn('villa_unit_id', $unitIds)
-            ->whereDate('created_at', $today);
+        $query = IcalEvent::whereIn('villa_unit_id', $unitIds);
 
         // Filter berdasarkan jadwal booking
         if ($filter === 'day') {
@@ -268,12 +267,12 @@ class VillaController extends Controller
             $query->whereBetween('start_date', [$today, $today->copy()->addDays(6)->endOfDay()]);
         } elseif ($filter === 'month') {
             $query->whereBetween('start_date', [$today, $today->copy()->addDays(29)->endOfDay()]);
+        } else {
+            // 'all' ambil event yang dibuat hari ini
+            $query->whereDate('created_at', $today);
         }
-        // 'all' tidak perlu filter jadwal, ambil semua event yang diperbarui hari ini
 
         $latestEvents = $query->orderByDesc('created_at')->get();
-
-        // Kirim push notification ke semua device yang ada di database
         if ($latestEvents->count() > 0) {
             $latestEvent = $latestEvents->first(); // Ambil event terbaru
             $deviceTokens = \App\Models\DeviceToken::whereNotNull('fcm_token')
