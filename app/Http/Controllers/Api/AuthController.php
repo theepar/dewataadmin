@@ -20,8 +20,8 @@ class AuthController extends Controller
         $request->validate([
             'email'       => 'required|email',
             'password'    => 'required',
-            'device_name' => 'required|string', // [WAJIBKAN device_name]
-            'fcm_token'   => 'nullable|string', // [OPSIONAL fcm_token]
+            'device_name' => 'required|string',
+            'fcm_token'   => 'nullable|string',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -32,46 +32,32 @@ class AuthController extends Controller
             ]);
         }
 
-        // Buat token baru
+        // 1. Buat personal access token
         $token = $user->createToken($request->device_name)->plainTextToken;
         $role  = $user->roles->pluck('name')->first();
 
-        // [UPDATE FCM TOKEN JIKA ADA]
+        // 2. Update/simpan device token (multi device support)
         if ($request->filled('fcm_token')) {
-
-            // Simpan ke tabel device_tokens saja
             \App\Models\DeviceToken::updateOrCreate(
                 [
-                    'user_id' => $user->id,
+                    'user_id'     => $user->id,
                     'device_name' => $request->device_name,
                 ],
                 [
-                    'fcm_token' => $request->fcm_token,
+                    'fcm_token'   => $request->fcm_token,
                 ]
             );
-
-            // Ambil device name dari token yang baru dibuat
-            $realDeviceName = $user->currentAccessToken()->name ?? $request->device_name;
-
-            // Update device_name di tabel device_tokens agar selalu sesuai dengan token
-            \App\Models\DeviceToken::where('user_id', $user->id)
-                ->where('fcm_token', $request->fcm_token)
-                ->update(['device_name' => $realDeviceName]);
         }
 
-        // Ambil device name dari token jika ada
-        $deviceName = $request->device_name
-            ?? ($user->currentAccessToken()->name ?? null);
+        // 3. Catat login history
+        $deviceName = $request->device_name ?? ($user->currentAccessToken()->name ?? null);
 
-        // Cek apakah device_name ada di device_tokens (berarti dari mobile)
+        // Jika device token ditemukan, user_agent diisi device_name (mobile), jika tidak pakai user agent asli
         $deviceToken = \App\Models\DeviceToken::where('user_id', $user->id)
             ->where('device_name', $deviceName)
             ->first();
-
-        // Jika device_token ditemukan, user_agent diisi dengan device_name (mobile), jika tidak tetap pakai user agent asli
         $userAgent = $deviceToken ? $deviceToken->device_name : $request->userAgent();
 
-        // Tambahkan log login history
         \App\Models\LoginHistory::create([
             'user_id'     => $user->id,
             'ip_address'  => $request->ip(),
@@ -95,7 +81,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $deviceName = $request->input('device_name');
-        $fcmToken = $request->input('fcm_token');
+        $fcmToken   = $request->input('fcm_token');
 
         // Hapus token akses
         $current = $user->currentAccessToken();
@@ -106,8 +92,8 @@ class AuthController extends Controller
         // Hapus device token jika ada
         if ($deviceName && $fcmToken) {
             \App\Models\DeviceToken::where('user_id', $user->id)
-                ->where('fcm_token', $fcmToken)
                 ->where('device_name', $deviceName)
+                ->where('fcm_token', $fcmToken)
                 ->delete();
         }
 
@@ -120,10 +106,11 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'device_name' => 'required',
+            'name'        => 'required|string|max:255',
+            'email'       => 'required|string|email|max:255|unique:users',
+            'password'    => 'required|string|min:8|confirmed',
+            'device_name' => 'required|string',
+            'fcm_token'   => 'nullable|string',
         ]);
 
         $user = User::create([
@@ -138,17 +125,18 @@ class AuthController extends Controller
             $user->assignRole($pegawaiRole);
         }
 
+        // Buat personal access token
         $token = $user->createToken($request->device_name)->plainTextToken;
 
-        // Setelah createToken di register
+        // Simpan device token jika ada
         if ($request->filled('fcm_token')) {
             \App\Models\DeviceToken::updateOrCreate(
                 [
-                    'user_id' => $user->id,
+                    'user_id'     => $user->id,
                     'device_name' => $request->device_name,
                 ],
                 [
-                    'fcm_token' => $request->fcm_token,
+                    'fcm_token'   => $request->fcm_token,
                 ]
             );
         }
@@ -161,22 +149,25 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /**
+     * Update FCM token for current device.
+     */
     public function updateFcmToken(Request $request)
     {
         $request->validate([
-            'fcm_token' => 'required|string',
-            'device_name' => 'nullable|string',
+            'fcm_token'   => 'required|string',
+            'device_name' => 'required|string',
         ]);
 
         $user = Auth::user();
 
         \App\Models\DeviceToken::updateOrCreate(
             [
-                'user_id' => $user->id,
+                'user_id'     => $user->id,
                 'device_name' => $request->device_name,
             ],
             [
-                'fcm_token' => $request->fcm_token,
+                'fcm_token'   => $request->fcm_token,
             ]
         );
 
