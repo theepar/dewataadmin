@@ -7,7 +7,7 @@ use App\Models\WebsiteApiKey;
 
 // --- FILAMENT RESOURCE & KOMPONEN ---
 use App\Filament\Resources\WebsiteApiKeyResource\Pages;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
@@ -16,18 +16,26 @@ use Filament\Tables\Columns\TextColumn;
 
 class WebsiteApiKeyResource extends Resource
 {
-    protected static ?string $model           = WebsiteApiKey::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-key';
-    protected static ?string $navigationGroup = 'Manajemen Url';
+    protected static ?string $model = WebsiteApiKey::class;
+
+    public static function getNavigationIcon(): ?string
+    {
+        return 'heroicon-o-key';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Manajemen Url';
+    }
 
     public static function canViewAny(): bool
     {
         return auth()->user()?->hasRole('admin');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             Select::make('user_id')
                 ->label('User')
                 ->options(

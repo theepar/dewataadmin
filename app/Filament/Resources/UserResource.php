@@ -4,9 +4,9 @@ namespace App\Filament\Resources;
 
 // --- NAMESPACE DASAR FILAMENT ---
 use App\Models\User;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS & TABLES ---
 use Filament\Forms\Components\Select;
@@ -28,14 +28,22 @@ use Illuminate\Support\Facades\Password;
 
 class UserResource extends Resource
 {
-    protected static ?string $model           = User::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-user';
-    protected static ?string $navigationGroup = 'Account';
+    protected static ?string $model = User::class;
 
-    public static function form(Form $form): Form
+    public static function getNavigationIcon(): ?string
     {
-        return $form
-            ->schema([
+        return 'heroicon-o-user';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Account';
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
                 TextInput::make('name')->required(),
                 TextInput::make('email')->email()->required(),
                 TextInput::make('password')

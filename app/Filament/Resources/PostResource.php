@@ -6,7 +6,7 @@ use App\Filament\Resources\PostResource\Pages;
 use App\Filament\Resources\PostResource\RelationManagers;
 use App\Models\Post;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,8 +21,15 @@ class PostResource extends Resource
 {
     protected static ?string $model = Post::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?string $navigationGroup = 'Account';
+    public static function getNavigationIcon(): ?string
+    {
+        return 'heroicon-o-document-text';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Account';
+    }
 
     protected static ?string $navigationLabel = 'Posts';
 
@@ -31,10 +38,10 @@ class PostResource extends Resource
         return auth()->user()?->hasRole('admin');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextInput::make('title')->required(),
                 RichEditor::make('body')->required()->disableToolbarButtons(['attachFiles']),
             ]);

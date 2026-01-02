@@ -3,7 +3,7 @@
 namespace App\Filament\Resources;
 
 // --- MODEL ---
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 
 // --- FILAMENT RESOURCE & KOMPONEN ---
 use App\Models\IcalEvent;
@@ -27,18 +27,26 @@ use App\Filament\Resources\VillaUnitResource\Pages;
 class VillaUnitResource extends Resource
 {
     protected static ?string $model = VillaUnit::class;
-    protected static ?string $navigationIcon = 'heroicon-o-link';
-    protected static ?string $navigationGroup = 'Properti';
+
+    public static function getNavigationIcon(): ?string
+    {
+        return 'heroicon-o-link';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Properti';
+    }
 
     public static function canViewAny(): bool
     {
         return auth()->user()?->hasRole('admin');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('villa_id')
                     ->label('Villa')
                     ->relationship('villa', 'name')

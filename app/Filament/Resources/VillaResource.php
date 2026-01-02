@@ -4,9 +4,9 @@ namespace App\Filament\Resources;
 
 // --- NAMESPACE DASAR FILAMENT ---
 use App\Models\Villa;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 
 // --- IMPORTS UNTUK KOMPONEN FILAMENT FORMS ---
 use Filament\Tables\Actions\Action;
@@ -31,19 +31,27 @@ use App\Filament\Resources\VillaResource\Pages;
 
 class VillaResource extends Resource
 {
-    protected static ?string $model           = Villa::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-home';
-    protected static ?string $navigationGroup = 'Properti';
+    protected static ?string $model = Villa::class;
+
+    public static function getNavigationIcon(): ?string
+    {
+        return 'heroicon-o-home';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Properti';
+    }
 
     public static function canViewAny(): bool
     {
         return auth()->user()?->hasRole('admin');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Informasi Dasar Villa')
                     ->description('Detail utama tentang properti ini.')
                     ->schema([

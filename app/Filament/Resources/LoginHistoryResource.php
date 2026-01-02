@@ -7,8 +7,8 @@ use App\Models\LoginHistory;
 
 // --- FILAMENT RESOURCE & COMPONENTS ---
 use App\Filament\Resources\LoginHistoryResource\Pages;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 
 // --- FILAMENT TABLES ---
 use Filament\Tables\Table;
@@ -24,14 +24,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class LoginHistoryResource extends Resource
 {
-    protected static ?string $model           = LoginHistory::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-arrow-right-on-rectangle';
-    protected static ?string $navigationGroup = 'Account';
+    protected static ?string $model = LoginHistory::class;
 
-    public static function form(Form $form): Form
+    public static function getNavigationIcon(): ?string
     {
-        return $form
-            ->schema([
+        return 'heroicon-o-arrow-right-on-rectangle';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Account';
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
                 //
             ]);
     }
