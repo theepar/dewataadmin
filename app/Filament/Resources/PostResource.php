@@ -23,8 +23,10 @@ class PostResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Account';
-
     protected static ?string $navigationLabel = 'Posts';
+
+    // Hide from navigation menu
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function canViewAny(): bool
     {

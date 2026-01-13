@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 // --- NAMESPACE DASAR FILAMENT ---
 use App\Models\Villa;
+use App\Models\VillaCategory;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
@@ -20,6 +21,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\MultiSelect;
@@ -37,7 +39,7 @@ class VillaResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasRole('admin');
+        return auth()->user()?->hasRole('admin') ?? false;
     }
 
     public static function form(Form $form): Form
@@ -78,8 +80,7 @@ class VillaResource extends Resource
 
                         RichEditor::make('description')
                             ->label('Deskripsi Villa')
-                            ->columnSpanFull()
-                            ->nullable(),
+                            ->columnSpanFull(),
 
                         // Tambahkan input kamar, bed, bathroom
                         TextInput::make('bedroom')
@@ -176,18 +177,10 @@ class VillaResource extends Resource
                     ->schema([
                         Select::make('category')
                             ->label('Kategori')
-                            ->options([
-                                'luxury'    => 'Luxury',
-                                'premium'   => 'Premium',
-                                'standard'  => 'Standard',
-                                'budget'    => 'Budget',
-                                'beachfront' => 'Beachfront',
-                                'mountain'  => 'Mountain View',
-                                'rice_field' => 'Rice Field View',
-                                'city'      => 'City View',
-                            ])
+                            ->options(fn() => VillaCategory::getActiveOptions())
                             ->searchable()
-                            ->placeholder('Pilih kategori villa'),
+                            ->placeholder('Pilih kategori villa')
+                            ->helperText('Kelola kategori di menu Kategori Villa'),
                     ]),
 
                 Section::make('Kontak Owner')
@@ -198,17 +191,33 @@ class VillaResource extends Resource
                             ->schema([
                                 TextInput::make('name')
                                     ->label('Nama')
-                                    ->required(),
-                                TextInput::make('phone')
-                                    ->label('No. Telepon')
-                                    ->tel()
-                                    ->required(),
-                                TextInput::make('email')
-                                    ->label('Email')
-                                    ->email(),
+                                    ->required()
+                                    ->columnSpan(2),
+                                Select::make('contact_type')
+                                    ->label('Tipe Kontak')
+                                    ->options([
+                                        'phone' => 'Telepon',
+                                        'email' => 'Email',
+                                        'whatsapp' => 'WhatsApp',
+                                    ])
+                                    ->required()
+                                    ->default('phone')
+                                    ->live(),
+                                TextInput::make('contact_value')
+                                    ->label('Kontak')
+                                    ->required()
+                                    ->tel(fn($get) => in_array($get('contact_type'), ['phone', 'whatsapp']))
+                                    ->email(fn($get) => $get('contact_type') === 'email')
+                                    ->placeholder(fn($get) => match ($get('contact_type')) {
+                                        'phone' => '+62 812 3456 7890',
+                                        'whatsapp' => '+62 812 3456 7890',
+                                        'email' => 'email@example.com',
+                                        default => 'Masukkan kontak',
+                                    }),
                                 TextInput::make('role')
                                     ->label('Jabatan')
-                                    ->placeholder('Owner / Manager / Marketing'),
+                                    ->placeholder('Owner / Manager / Marketing')
+                                    ->columnSpan(2),
                             ])
                             ->addActionLabel('Tambah Kontak')
                             ->minItems(0)
@@ -235,12 +244,10 @@ class VillaResource extends Resource
                                     ->label('Diskon (IDR)')
                                     ->numeric()
                                     ->prefix('Rp'),
-                                TextInput::make('valid_from')
-                                    ->label('Berlaku Dari')
-                                    ->type('date'),
-                                TextInput::make('valid_until')
-                                    ->label('Berlaku Sampai')
-                                    ->type('date'),
+                                DatePicker::make('valid_from')
+                                    ->label('Berlaku Dari'),
+                                DatePicker::make('valid_until')
+                                    ->label('Berlaku Sampai'),
                                 TextInput::make('description')
                                     ->label('Keterangan')
                                     ->columnSpanFull(),

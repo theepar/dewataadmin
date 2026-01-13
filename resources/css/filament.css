@@ -1,13 +1,128 @@
 /* resources/css/filament.css */
+/* Custom styles using Filament CSS variables for theme consistency */
 
-/* Untuk dark mode: styling select dan option */
-.dark select {
-    background-color: var(--primary-900) !important;
-    color: var(--primary-100) !important;
-    border-color: var(--primary-700) !important;
+/* ===== ALL DROPDOWNS - USING FILAMENT VARIABLES ===== */
+
+/* Dropdown containers */
+.choices,
+.choices__inner,
+.choices__list--single {
+    background-color: rgb(var(--gray-50)) !important;
+    border-color: rgb(var(--gray-200)) !important;
+    color: rgb(var(--gray-950)) !important;
 }
 
+.choices__list--dropdown {
+    background-color: rgb(var(--gray-50)) !important;
+    border-color: rgb(var(--gray-200)) !important;
+}
+
+/* Dark mode dropdown containers */
+.dark .choices,
+.dark .choices__inner,
+.dark .choices__list--single {
+    background-color: rgb(var(--gray-900)) !important;
+    border-color: rgb(var(--gray-700)) !important;
+    color: rgb(var(--gray-100)) !important;
+}
+
+.dark .choices__list--dropdown {
+    background-color: rgb(var(--gray-900)) !important;
+    border-color: rgb(var(--gray-700)) !important;
+}
+
+/* Dropdown items - Light mode */
+.choices__list--dropdown .choices__item,
+.choices__item--selectable {
+    background-color: rgb(var(--gray-50)) !important;
+    color: rgb(var(--gray-950)) !important;
+}
+
+/* Dropdown items - Dark mode */
+.dark .choices__list--dropdown .choices__item,
+.dark .choices__item--selectable {
+    background-color: rgb(var(--gray-900)) !important;
+    color: rgb(var(--gray-100)) !important;
+}
+
+/* Hover state - uses primary color */
+.choices__list--dropdown .choices__item--selectable.is-highlighted,
+.choices__item--selectable:hover {
+    background-color: rgb(var(--primary-500)) !important;
+    color: rgb(255, 255, 255) !important;
+}
+
+.dark .choices__list--dropdown .choices__item--selectable.is-highlighted,
+.dark .choices__item--selectable:hover {
+    background-color: rgb(var(--primary-500)) !important;
+    color: rgb(0, 0, 0) !important;
+}
+
+/* Native select elements */
+select,
+select option {
+    background-color: rgb(var(--gray-50)) !important;
+    color: rgb(var(--gray-950)) !important;
+}
+
+.dark select,
 .dark select option {
-    background-color: var(--primary-800) !important;
-    color: var(--primary-100) !important;
+    background-color: rgb(var(--gray-900)) !important;
+    color: rgb(var(--gray-100)) !important;
+}
+
+/* Input fields in dropdowns */
+.choices__input {
+    background-color: rgb(var(--gray-100)) !important;
+    color: rgb(var(--gray-950)) !important;
+}
+
+.dark .choices__input {
+    background-color: rgb(var(--gray-800)) !important;
+    color: rgb(var(--gray-100)) !important;
+}
+
+.choices__input::placeholder {
+    color: rgb(var(--gray-400)) !important;
+}
+
+.dark .choices__input::placeholder {
+    color: rgb(var(--gray-500)) !important;
+}
+
+/* Placeholder text */
+.choices__placeholder {
+    color: rgb(var(--gray-400)) !important;
+}
+
+.dark .choices__placeholder {
+    color: rgb(var(--gray-500)) !important;
+}
+
+/* ===== LOGIN PAGE RESPONSIVE STYLES ===== */
+
+@media (max-width: 640px) {
+    .fi-simple-page {
+        padding: 0.75rem;
+    }
+
+    .fi-simple-main {
+        max-width: 100%;
+    }
+
+    .fi-simple-header-heading {
+        font-size: 1.5rem !important;
+        text-align: center;
+    }
+
+    .fi-simple-header-subheading {
+        font-size: 0.875rem !important;
+        text-align: center;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    .fi-simple-main {
+        max-width: 24rem;
+    }
 }
